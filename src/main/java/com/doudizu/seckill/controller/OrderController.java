@@ -8,6 +8,7 @@ import com.doudizu.seckill.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
@@ -39,11 +40,18 @@ public class OrderController {
         }
         //判断是否可秒杀
         List<Order> orders = orderService.getOrderByUidAndPid(uid, pid);
-        if (orders.size() >=1) {
+        if (orders.size() >= 1) {
             return "seckill fail";
         }
         //减库存 下订单 写入秒杀订单
         String orderId = orderService.createOrder(uid, pid);
         return orderId;
+    }
+
+    //支付订单
+    @RequestMapping("/pay")
+    @ResponseBody
+    public int payOrder(@RequestParam("uid") int uid, @RequestParam("price") int price, @RequestParam("orderId") String orderId) {
+        return orderService.payOrder(uid, price, orderId);
     }
 }

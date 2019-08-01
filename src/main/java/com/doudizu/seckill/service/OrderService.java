@@ -34,4 +34,9 @@ public class OrderService {
         orderDao.createOrder(orderId, uid, pid);
         return order.getOrderId();
     }
+
+    //支付
+    public int payOrder(int uid, int price, String orderId) {
+        return orderDao.updatePayStatus(uid, price, orderId);
+    }
 }
