@@ -93,7 +93,7 @@ int main(void)
 	//ÔËÐÐ1s
 	std::this_thread::sleep_for(miliseconds(1000));
 	stop_ = true;
-	tokenbucket::getInstance().quit();		
+	token.quit();		
 	t1.join();
 	t2.join();
 	t3.join();	
