@@ -63,7 +63,6 @@ void thr2(bool& stop_, size_t milisecond)
 int main(void)
 {
 	bool stop_ = false;
-<<<<<<< HEAD
 	auto& token = tokenbucket::getInstance();
 	cout << "max token:" << token.getMaxToken() << "\n";
 	//√ø200ms≤…”√◊Ë»˚∑Ω Ω«Î«Û“ª¥Œ¡Ó≈∆
@@ -90,21 +89,14 @@ int main(void)
 
 	std::this_thread::sleep_for(miliseconds(500));
 	//√ø100ms≤…”√◊Ë»˚∑Ω Ω«Î«Û“ª¥Œ¡Ó≈∆
-=======
-	//ÊØè200msÈááÁî®ÈòªÂ°ûÊñπÂºèËØ∑Ê±Ç‰∏ÄÊ¨°‰ª§Áâå
-	thread t1(thr1,std::ref(stop_),200);
-	//ÊØè20msÈááÁî®ÈùûÈòªÂ°ûÊñπÂºèËØ∑Ê±Ç‰∏ÄÊ¨°‰ª§Áâå
-	thread t2(thr2, std::ref(stop_), 20);
-	//ÊØè100msÈááÁî®ÈòªÂ°ûÊñπÂºèËØ∑Ê±Ç‰∏ÄÊ¨°‰ª§Áâå
->>>>>>> 29b9067c91540167a4be870caecedb02de2ed01c
 	thread t3(thr1, std::ref(stop_), 100);
-	//ËøêË°å1s
+	//‘À––1s
 	std::this_thread::sleep_for(miliseconds(1000));
 	stop_ = true;
 	tokenbucket::getInstance().quit();		
 	t1.join();
 	t2.join();
 	t3.join();	
-	cout << "quit\n";
+	cout << "main thread quit\n";
 	return 0;
 }
