@@ -1,6 +1,5 @@
 #include "TokenBucket.h"
 #include <iostream>
-#include <string>
 #include <mutex>
 #include <chrono>
 using std::cin;
@@ -65,13 +64,13 @@ void thr2(bool& stop_, size_t milisecond)
 int main(void)
 {
 	bool stop_ = false;
-	//Ã¿200ms²ÉÓÃ×èÈû·½Ê½ÇëÇóÒ»´ÎÁîÅÆ
+	//æ¯200msé‡‡ç”¨é˜»å¡æ–¹å¼è¯·æ±‚ä¸€æ¬¡ä»¤ç‰Œ
 	thread t1(thr1,std::ref(stop_),200);
-	//Ã¿20ms²ÉÓÃ·Ç×èÈû·½Ê½ÇëÇóÒ»´ÎÁîÅÆ
+	//æ¯20msé‡‡ç”¨éé˜»å¡æ–¹å¼è¯·æ±‚ä¸€æ¬¡ä»¤ç‰Œ
 	thread t2(thr2, std::ref(stop_), 20);
-	//Ã¿100ms²ÉÓÃ×èÈû·½Ê½ÇëÇóÒ»´ÎÁîÅÆ
+	//æ¯100msé‡‡ç”¨é˜»å¡æ–¹å¼è¯·æ±‚ä¸€æ¬¡ä»¤ç‰Œ
 	thread t3(thr1, std::ref(stop_), 100);
-	//ÔËĞĞ1s
+	//è¿è¡Œ1s
 	std::this_thread::sleep_for(miliseconds(1000));
 	stop_ = true;
 	tokenbucket::getInstance().quit();
