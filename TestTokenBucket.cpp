@@ -65,9 +65,13 @@ void thr2(bool& stop_, size_t milisecond)
 int main(void)
 {
 	bool stop_ = false;
+	//每200ms采用阻塞方式请求一次令牌
 	thread t1(thr1,std::ref(stop_),200);
+	//每20ms采用非阻塞方式请求一次令牌
 	thread t2(thr2, std::ref(stop_), 20);
+	//每100ms采用阻塞方式请求一次令牌
 	thread t3(thr1, std::ref(stop_), 100);
+	//运行1s
 	std::this_thread::sleep_for(miliseconds(1000));
 	stop_ = true;
 	tokenbucket::getInstance().quit();
