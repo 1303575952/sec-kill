@@ -21,11 +21,13 @@ public:
 	bool acquire();
 	//非阻塞
 	bool nonblockacquire();
-	//permitsPerSecond:每秒钟可以执行的最大请求数
+	//permitsPerSecond:每秒钟生成令牌的个数
 	void setPermitsPerSecond(size_t permitsPerSecond);
 	void quit();
 	//maxtoken:令牌桶中的最大令牌个数
 	void setMaxToken(size_t maxtoken);
+	size_t getMaxToken()const;
+	size_t getnumpersecond();
 	void beginWork();
 	void stopWork();	
 protected:    

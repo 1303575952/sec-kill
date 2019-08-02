@@ -49,7 +49,6 @@ void tokenbucket::setMaxToken(size_t maxtoken)
 }
 void tokenbucket::setPermitsPerSecond(size_t permitsPerSecond)
 {
-	lock_guard lock_(mut_);
 	millseconds_ = 1000 / permitsPerSecond;
 	if (1000 % permitsPerSecond > 0)
 		++millseconds_;
@@ -88,4 +87,12 @@ void tokenbucket::quit()
 		quit_ = true;
 	}
 	cv_.notify_all();	
+}
+size_t tokenbucket::getMaxToken() const
+{
+	return maxtoken_;
+}
+size_t tokenbucket::getnumpersecond()
+{
+	return 1000 / millseconds_;
 }
