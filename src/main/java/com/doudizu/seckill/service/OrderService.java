@@ -29,14 +29,13 @@ public class OrderService {
     @Transactional
     public String createOrder(int uid, int pid) {
         productService.reduceStock(pid);
-        Order order = new Order();
         String orderId = "" + System.currentTimeMillis() + pid + uid;
         orderDao.createOrder(orderId, uid, pid);
-        return order.getOrderId();
+        return orderId;
     }
 
-    //支付
+    //支付。0表示成功，1表示失败
     public int payOrder(int uid, int price, String orderId) {
-        return orderDao.updatePayStatus(uid, price, orderId);
+        return orderDao.updatePayStatus(uid, price, orderId) == 1 ? 0 : 1;
     }
 }

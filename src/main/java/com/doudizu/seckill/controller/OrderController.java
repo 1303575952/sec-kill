@@ -7,14 +7,13 @@ import com.doudizu.seckill.service.OrderService;
 import com.doudizu.seckill.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
-@RequestMapping("/order")
 public class OrderController {
 
     @Autowired
@@ -27,31 +26,42 @@ public class OrderController {
     OrderService orderService;
 
     //下单
-    @RequestMapping("/order")
+    @RequestMapping(value = "/order", method = RequestMethod.POST)
     @ResponseBody
-    public String createOrder() {
-        int uid = 123;
-        int pid = 176467513;
+    public Map createOrder(@RequestBody Map<String, String> map) {
+        Map<String, Object> returnMap = new HashMap<>();
+        int uid = Integer.valueOf(map.get("uid"));
+        int pid = Integer.valueOf(map.get("pid"));
         //判断库存
         Product product = productService.getProductByPid(pid);
         int stock = product.getCount();
         if (stock <= 0) {
-            return "stock fail";
+            returnMap.put("code", 1);
+            return returnMap;
         }
         //判断是否可秒杀
         List<Order> orders = orderService.getOrderByUidAndPid(uid, pid);
         if (orders.size() >= 1) {
-            return "seckill fail";
+            //TODO 已经下订单了，重复购买
         }
         //减库存 下订单 写入秒杀订单
         String orderId = orderService.createOrder(uid, pid);
-        return orderId;
+        returnMap.put("code", 0);
+        returnMap.put("orderId", orderId);
+        return returnMap;
     }
 
     //支付订单
     @RequestMapping("/pay")
     @ResponseBody
-    public int payOrder(@RequestParam("uid") int uid, @RequestParam("price") int price, @RequestParam("orderId") String orderId) {
-        return orderService.payOrder(uid, price, orderId);
+    public Map payOrder(@RequestBody Map<String, String> map) {
+        Map<String, Object> returnMap = new HashMap<>();
+        int uid = Integer.valueOf(map.get("uid"));
+        int price = Integer.valueOf(map.get("price"));
+        String orderId = map.get("orderId");
+        int code = orderService.payOrder(uid, price, orderId);
+        returnMap.put("code", code);
+        returnMap.put("token", "");
+        return returnMap;
     }
 }
