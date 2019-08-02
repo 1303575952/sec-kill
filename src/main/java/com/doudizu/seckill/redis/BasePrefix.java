@@ -20,8 +20,7 @@ public abstract class BasePrefix implements KeyPrefix{
 	}
 
 	public String getPrefix() {
-		String className = getClass().getSimpleName();
-		return className+":" + prefix;
+		return prefix;
 	}
 
 }

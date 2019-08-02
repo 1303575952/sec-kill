@@ -15,7 +15,7 @@ public class RedisService {
 	/**
 	 * 获取单个对象
 	 * */
-	public <T> T get(KeyPrefix prefix, String key,  Class<T> clazz) {
+	public <T> T get(KeyPrefix prefix, int key,  Class<T> clazz) {
 		 Jedis jedis = null;
 		 try {
 			 jedis =  jedisPool.getResource();
@@ -32,7 +32,7 @@ public class RedisService {
 	/**
 	 * 设置对象
 	 * */
-	public <T> boolean set(KeyPrefix prefix, String key,  T value) {
+	public <T> boolean set(KeyPrefix prefix, int key,  T value) {
 		 Jedis jedis = null;
 		 try {
 			 jedis =  jedisPool.getResource();

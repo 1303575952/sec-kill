@@ -11,10 +11,12 @@ public class ProductService {
     @Autowired
     ProductDao productDao;
 
+    //通过商品编号获取商品消息
     public Product getProductByPid(int pid) {
         return productDao.getProductByPid(pid);
     }
 
+    //根据商品编号减商品库存
     public void reduceStock(int pid) {
         productDao.reduceStock(pid);
     }

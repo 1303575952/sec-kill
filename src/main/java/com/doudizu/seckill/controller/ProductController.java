@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
@@ -24,27 +25,27 @@ public class ProductController {
         return "product detail";
     }
 
-    @GetMapping("/product")
+    @GetMapping("/product/mysql")
     @ResponseBody
-    public Result<Product> getProduct() {
-        Product product = productService.getProductByPid(176467513);
-        return Result.success(product);
+    public Product getProduct(@RequestParam("pid") int pid) {
+        Product product = productService.getProductByPid(pid);
+        return product;
     }
 
-    @RequestMapping("/redis/get")
+    @RequestMapping("/product/redis")
     @ResponseBody
-    public Result<Product> redisGet() {
-        Product product = redisService.get(ProductKey.getByPid, "" + 1, Product.class);
-        return Result.success(product);
+    public Product redisGet(@RequestParam("pid") int pid) {
+        Product product = redisService.get(ProductKey.getByPid, pid, Product.class);
+        return product;
     }
 
-    @RequestMapping("/redis/set")
+    @RequestMapping("/product/redis/set")
     @ResponseBody
-    public Result<Boolean> redisSet() {
+    public Result<Boolean> redisSet(@RequestParam("pid") int pid) {
         Product product = new Product();
         product.setPid(1);
         product.setDetail("this is detail");
-        redisService.set(ProductKey.getByPid, "" + 1, product);//ProductKey:pid1
+        redisService.set(ProductKey.getByPid, pid, product);//pid
         return Result.success(true);
     }
 }
