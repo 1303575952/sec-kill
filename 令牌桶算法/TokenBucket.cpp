@@ -1,12 +1,12 @@
 #include "TokenBucket.h"
 
-tokenbucket::tokenbucket():quit_(false),stop_(false), millseconds_(50),maxtoken_(20),token_(0)
+tokenbucket::tokenbucket():quit_(false),stop_(false), nanoseconds_(50),maxtoken_(20),token_(0)
 {
 	thr = thread([ & ] {
 		while (!quit_)
 		{
 			while (stop_);
-			std::this_thread::sleep_until(high_clock::now() + miliseconds(millseconds_));
+			std::this_thread::sleep_until(high_clock::now() + nanoseconds(nanoseconds_));
 			{
 				lock_guard lock_(mut_);
 				if (token_ < maxtoken_)
@@ -49,9 +49,9 @@ void tokenbucket::setMaxToken(size_t maxtoken)
 }
 void tokenbucket::setPermitsPerSecond(size_t permitsPerSecond)
 {
-	millseconds_ = 1000 / permitsPerSecond;
-	if (1000 % permitsPerSecond > 0)
-		++millseconds_;
+	nanoseconds_ = 1000000000 / permitsPerSecond;
+	if (1000000000 % permitsPerSecond > 0)
+		++nanoseconds_;
 }
 bool tokenbucket::acquire()
 {
@@ -94,5 +94,5 @@ size_t tokenbucket::getMaxToken() const
 }
 size_t tokenbucket::getnumpersecond()
 {
-	return 1000 / millseconds_;
+	return 1000000000 / nanoseconds_;
 }

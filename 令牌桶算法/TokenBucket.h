@@ -13,9 +13,13 @@ class tokenbucket
 	using thread = typename std::thread;
 	using high_clock = typename std::chrono::high_resolution_clock;
 	using miliseconds = typename std::chrono::milliseconds;
+	using microseconds = typename std::chrono::microseconds;
+	using nanoseconds = typename std::chrono::nanoseconds;
 	using lock_guard = typename std::lock_guard<typename mutex>;
 	using unique_lock = typename std::unique_lock<typename mutex>;
 public:
+	tokenbucket(const tokenbucket&) = delete;
+	tokenbucket operator=(const tokenbucket&)=delete;
 	static tokenbucket& getInstance();
 	//获取令牌
 	bool acquire();
@@ -36,7 +40,7 @@ protected:
 private:
 	bool quit_;
 	bool stop_;	
-	size_t millseconds_;//产生令牌的周期，单位为ms
+	size_t nanoseconds_;//产生令牌的周期，单位为ms
 	size_t maxtoken_;//最大令牌个数
 	size_t token_;
 	mutex mut_;
