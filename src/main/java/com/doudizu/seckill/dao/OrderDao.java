@@ -1,6 +1,7 @@
 package com.doudizu.seckill.dao;
 
 import com.doudizu.seckill.domain.Order;
+import com.doudizu.seckill.domain.OrderInfo;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -16,8 +17,8 @@ public interface OrderDao {
     int updatePayStatus(@Param("uid") int uid, @Param("price") int price, @Param("orderId") String orderId);
 
     //查询某用户的全部订单
-    @Select("select * from `order` where uid=#{uid}")
-    List<Order> getOrdersByUid(@Param("uid") int uid);
+    @Select("select A.uid,A.pid,B.detail,A.order_id,A.price,A.status,A.token from (select * from `order` where uid=#{uid}) as A left join product as B on A.pid=B.pid order by A.pid")
+    List<OrderInfo> getOrdersByUid(@Param("uid") int uid);
 
     //查询某用户某商品的订单
     @Select("select * from `order` where uid=#{uid} and pid=#{pid}")

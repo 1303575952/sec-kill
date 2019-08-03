@@ -2,6 +2,7 @@ package com.doudizu.seckill.service;
 
 import com.doudizu.seckill.dao.OrderDao;
 import com.doudizu.seckill.domain.Order;
+import com.doudizu.seckill.domain.OrderInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +17,7 @@ public class OrderService {
     ProductService productService;
 
     //一个用户的所有订单
-    public List<Order> getOrdersByUid(int uid) {
+    public List<OrderInfo> getOrdersByUid(int uid) {
         return orderDao.getOrdersByUid(uid);
     }
 

@@ -25,6 +25,15 @@ public class OrderController {
     @Autowired
     OrderService orderService;
 
+    //一个用户的所有订单，不做压测
+    @RequestMapping("/result")
+    @ResponseBody
+    public Map<String, Object> getOrdersByUid(@RequestParam("uid") int uid) {
+        Map<String, Object> returnMap = new HashMap<>();
+        returnMap.put("data", orderService.getOrdersByUid(uid));
+        return returnMap;
+    }
+
     //下单
     @RequestMapping(value = "/order", method = RequestMethod.POST)
     @ResponseBody
