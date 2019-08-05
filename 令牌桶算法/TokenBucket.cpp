@@ -49,6 +49,7 @@ void tokenbucket::setMaxToken(size_t maxtoken)
 }
 void tokenbucket::setPermitsPerSecond(size_t permitsPerSecond)
 {
+	lock_guard lock_(mut_);
 	nanoseconds_ = 1000000000 / permitsPerSecond;
 	if (1000000000 % permitsPerSecond > 0)
 		++nanoseconds_;
