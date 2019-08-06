@@ -36,7 +36,7 @@ public class OrderService {
     }
 
     //支付。0表示成功，1表示失败
-    public int payOrder(int uid, int price, String orderId) {
-        return orderDao.updatePayStatus(uid, price, orderId) == 1 ? 0 : 1;
+    public int payOrder(String token, int uid, int price, String orderId) {
+        return orderDao.updatePayStatusAndToken(token, uid, price, orderId) == 1 ? 0 : 1;
     }
 }

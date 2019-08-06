@@ -1,10 +1,15 @@
 package com.doudizu.seckill.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Order;
 import com.doudizu.seckill.domain.Product;
 import com.doudizu.seckill.redis.RedisService;
 import com.doudizu.seckill.service.OrderService;
 import com.doudizu.seckill.service.ProductService;
+import com.doudizu.seckill.util.HttpClient;
+import com.doudizu.seckill.util.JsonGenerate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +20,8 @@ import java.util.Map;
 
 @Controller
 public class OrderController {
+    @Autowired
+    PropertiesConf propertiesConf;
 
     @Autowired
     RedisService redisService;
@@ -67,10 +74,18 @@ public class OrderController {
         Map<String, Object> returnMap = new HashMap<>();
         int uid = Integer.valueOf(map.get("uid"));
         int price = Integer.valueOf(map.get("price"));
-        String orderId = map.get("orderId");
-        int code = orderService.payOrder(uid, price, orderId);
+        String orderId = map.get("order_id");
+        String url = propertiesConf.getPayUrl() + ":" + propertiesConf.getPayPort() + propertiesConf.getPayPath();
+        JSONObject json = JsonGenerate.generatePayJsonString(uid, price, orderId);
+        System.out.println(url);
+        System.out.println(json);
+        String tokenJsonStr = HttpClient.httpPostWithJSON(url, json.toString());
+        System.out.println(tokenJsonStr);
+        JSONObject tokenJson = JSON.parseObject(tokenJsonStr);
+        String token = (String) tokenJson.get("token");
+        int code = orderService.payOrder(token, uid, price, orderId);
         returnMap.put("code", code);
-        returnMap.put("token", "");
+        returnMap.put("token", token);
         return returnMap;
     }
 }

@@ -16,6 +16,10 @@ public interface OrderDao {
     @Update("update `order` set status=1 where uid=#{uid} and price=#{price} and order_id=#{orderId}")
     int updatePayStatus(@Param("uid") int uid, @Param("price") int price, @Param("orderId") String orderId);
 
+    //支付，修改status状态和token
+    @Update("update `order` set status=1, token=#{token} where uid=#{uid} and price=#{price} and order_id=#{orderId}")
+    int updatePayStatusAndToken(@Param("token") String token, @Param("uid") int uid, @Param("price") int price, @Param("orderId") String orderId);
+
     //查询某用户的全部订单
     @Select("select A.uid,A.pid,B.detail,A.order_id,A.price,A.status,A.token from (select * from `order` where uid=#{uid}) as A left join product as B on A.pid=B.pid order by A.pid")
     List<OrderInfo> getOrdersByUid(@Param("uid") int uid);
