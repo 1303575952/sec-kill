@@ -15,4 +15,8 @@ public interface ProductDao {
     //减库存
     @Update("update product set count = count - 1 where pid = #{pid}")
     int reduceStock(@Param("pid") int pid);
+
+    //恢复商品原始数量100
+    @Update("update product set count=100")
+    int resetProduct();
 }
