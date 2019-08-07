@@ -10,6 +10,7 @@ import com.doudizu.seckill.service.OrderService;
 import com.doudizu.seckill.service.ProductService;
 import com.doudizu.seckill.util.HttpClient;
 import com.doudizu.seckill.util.JsonGenerate;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Controller
 public class OrderController {
     @Autowired
@@ -77,10 +79,10 @@ public class OrderController {
         String orderId = map.get("order_id");
         String url = propertiesConf.getPayUrl() + ":" + propertiesConf.getPayPort() + propertiesConf.getPayPath();
         JSONObject json = JsonGenerate.generatePayJsonString(uid, price, orderId);
-        System.out.println(url);
-        System.out.println(json);
+        log.info(url);
+        log.info(json.toString());
         String tokenJsonStr = HttpClient.httpPostWithJSON(url, json.toString());
-        System.out.println(tokenJsonStr);
+        log.info(tokenJsonStr);
         JSONObject tokenJson = JSON.parseObject(tokenJsonStr);
         String token = (String) tokenJson.get("token");
         int code = orderService.payOrder(token, uid, price, orderId);
