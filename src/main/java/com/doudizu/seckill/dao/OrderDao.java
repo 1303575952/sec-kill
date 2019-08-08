@@ -27,4 +27,8 @@ public interface OrderDao {
     //查询某用户某商品的订单
     @Select("select * from `order` where uid=#{uid} and pid=#{pid}")
     List<Order> getOrderByUidAndPid(@Param("uid") int uid, @Param("pid") int pid);
+
+    //清空订单表
+    @Update("truncate table `order`")
+    int clearOrder();
 }

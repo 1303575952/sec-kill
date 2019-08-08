@@ -15,4 +15,8 @@ public class PropertiesConf {
     private int payPort;
     @Value("${pay.path}")
     private String payPath;
+    @Value("${reset.token}")
+    private String resetToken;
+    @Value("${product.category}")
+    private int productCategory;
 }

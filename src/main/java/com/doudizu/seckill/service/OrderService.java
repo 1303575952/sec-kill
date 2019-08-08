@@ -39,4 +39,9 @@ public class OrderService {
     public int payOrder(String token, int uid, int price, String orderId) {
         return orderDao.updatePayStatusAndToken(token, uid, price, orderId) == 1 ? 0 : 1;
     }
+
+    //清空订单表，0表示清空
+    public int clearOrder() {
+        return orderDao.clearOrder();
+    }
 }

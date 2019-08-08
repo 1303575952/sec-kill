@@ -20,4 +20,9 @@ public class ProductService {
     public void reduceStock(int pid) {
         productDao.reduceStock(pid);
     }
+
+    //恢复商品原始数量100，返回数据为商品总数量
+    public int resetProduct() {
+        return productDao.resetProduct();
+    }
 }
