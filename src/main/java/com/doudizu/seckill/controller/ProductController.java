@@ -36,7 +36,8 @@ public class ProductController {
         return "product detail";
     }
 
-    @GetMapping("/product/mysql")
+    //商品信息接口
+    @GetMapping("/product")
     @ResponseBody
     public Product getProduct(@RequestParam("pid") int pid) {
         Product product = productService.getProductByPid(pid);
@@ -60,7 +61,7 @@ public class ProductController {
         return Result.success(true);
     }
 
-    //重置接口
+    //状态复原接口接口
     @RequestMapping("/reset")
     @ResponseBody
     public Map reset(@RequestParam("token") String token) {
@@ -78,6 +79,7 @@ public class ProductController {
         } else {
             code = 1;
         }
+        System.out.println("------------------"+token);
         returnMap.put("code", code);
         return returnMap;
     }

@@ -34,7 +34,7 @@ public class OrderController {
     @Autowired
     OrderService orderService;
 
-    //一个用户的所有订单，不做压测
+    //全部订单接口
     @RequestMapping("/result")
     @ResponseBody
     public Map<String, Object> getOrdersByUid(@RequestParam("uid") int uid) {
@@ -43,7 +43,7 @@ public class OrderController {
         return returnMap;
     }
 
-    //下单
+    //下订单接口
     @RequestMapping(value = "/order", method = RequestMethod.POST)
     @ResponseBody
     public Map createOrder(@RequestBody Map<String, String> map) {
@@ -64,15 +64,17 @@ public class OrderController {
         }
         //减库存 下订单 写入秒杀订单
         String orderId = orderService.createOrder(uid, pid);
+        log.info("orderId:" + orderId);
         returnMap.put("code", 0);
-        returnMap.put("orderId", orderId);
+        returnMap.put("order_id", orderId);
         return returnMap;
     }
 
-    //支付订单
-    @RequestMapping("/pay")
+    //支付接口
+    @RequestMapping(value = "/pay", method = RequestMethod.POST)
     @ResponseBody
     public Map payOrder(@RequestBody Map<String, String> map) {
+        log.info(map.toString());
         Map<String, Object> returnMap = new HashMap<>();
         int uid = Integer.valueOf(map.get("uid"));
         int price = Integer.valueOf(map.get("price"));
@@ -86,8 +88,11 @@ public class OrderController {
         JSONObject tokenJson = JSON.parseObject(tokenJsonStr);
         String token = (String) tokenJson.get("token");
         int code = orderService.payOrder(token, uid, price, orderId);
+        log.info("code:" + code);
+        log.info("token:" + token);
         returnMap.put("code", code);
         returnMap.put("token", token);
+        log.info(JSON.toJSONString(returnMap));
         return returnMap;
     }
 }
