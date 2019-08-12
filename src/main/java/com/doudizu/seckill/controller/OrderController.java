@@ -57,10 +57,11 @@ public class OrderController {
             returnMap.put("code", 1);
             return returnMap;
         }
-        //判断是否可秒杀
+        //判断是否可秒杀（已购买过）
         List<Order> orders = orderService.getOrderByUidAndPid(uid, pid);
         if (orders.size() >= 1) {
-            //TODO 已经下订单了，重复购买
+            returnMap.put("code", 1);
+            return returnMap;
         }
         //减库存 下订单 写入秒杀订单
         String orderId = orderService.createOrder(uid, pid);
@@ -90,8 +91,12 @@ public class OrderController {
         int code = orderService.payOrder(token, uid, price, orderId);
         log.info("code:" + code);
         log.info("token:" + token);
-        returnMap.put("code", code);
-        returnMap.put("token", token);
+        if(code==0){
+            returnMap.put("code", code);
+            returnMap.put("token", token);
+        }else{
+            returnMap.put("code", code);
+        }
         log.info(JSON.toJSONString(returnMap));
         return returnMap;
     }
