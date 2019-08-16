@@ -15,88 +15,60 @@ public class RedisService {
 	/**
 	 * 获取单个对象
 	 * */
-	public <T> T get(KeyPrefix prefix, int key,  Class<T> clazz) {
-		 Jedis jedis = null;
-		 try {
-			 jedis =  jedisCluster.getResource();
-			 //生成真正的key
-			 String realKey  = prefix.getPrefix() + key;
-			 String  str = jedis.get(realKey);
-			 T t =  stringToBean(str, clazz);
-			 return t;
-		 }finally {
-			  returnToCluster(jedis);
-		 }
+	public <T> T get(KeyPrefix prefix, int key,  Class<T> clazz) {		 
+		 
+		 //生成真正的key
+		 String realKey  = prefix.getPrefix() + key;
+		 String  str = jedisCluster.get(realKey);
+		 T t =  stringToBean(str, clazz);
+		 return t;
+		 
 	}
 	
 	/**
 	 * 设置对象
 	 * */
 	public <T> boolean set(KeyPrefix prefix, int key,  T value) {
-		 Jedis jedis = null;
-		 try {
-			 jedis =  jedisCluster.getResource();
-			 String str = beanToString(value);
-			 if(str == null || str.length() <= 0) {
-				 return false;
-			 }
-			//生成真正的key
-			 String realKey  = prefix.getPrefix() + key;
-			 int seconds =  prefix.expireSeconds();
-			 if(seconds <= 0) {
-				 jedis.set(realKey, str);
-			 }else {
-				 jedis.setex(realKey, seconds, str);
-			 }
-			 return true;
-		 }finally {
-			  returnToCluster(jedis);
+		 String str = beanToString(value);
+		 if(str == null || str.length() <= 0) {
+			 return false;
 		 }
+		//生成真正的key
+		 String realKey  = prefix.getPrefix() + key;
+		 int seconds =  prefix.expireSeconds();
+		 if(seconds <= 0) {
+			 jedisCluster.set(realKey, str);
+		 }else {
+			 jedisCluster.setex(realKey, seconds, str);
+		 }
+		 return true;
 	}
 	
 	/**
 	 * 判断key是否存在
 	 * */
-	public <T> boolean exists(KeyPrefix prefix, String key) {
-		 Jedis jedis = null;
-		 try {
-			 jedis =  jedisCluster.getResource();
+	public <T> boolean exists(KeyPrefix prefix, String key) {		 
 			//生成真正的key
 			 String realKey  = prefix.getPrefix() + key;
-			return  jedis.exists(realKey);
-		 }finally {
-			  returnToCluster(jedis);
-		 }
+			return  jedisCluster.exists(realKey);		 
 	}
 	
 	/**
 	 * 增加值
 	 * */
-	public <T> Long incr(KeyPrefix prefix, String key) {
-		 Jedis jedis = null;
-		 try {
-			 jedis =  jedisCluster.getResource();
+	public <T> Long incr(KeyPrefix prefix, String key) {		 
 			//生成真正的key
 			 String realKey  = prefix.getPrefix() + key;
-			return  jedis.incr(realKey);
-		 }finally {
-			  returnToCluster(jedis);
-		 }
+			return  jedisCluster.incr(realKey);		 
 	}
 	
 	/**
 	 * 减少值
 	 * */
 	public <T> Long decr(KeyPrefix prefix, String key) {
-		 Jedis jedis = null;
-		 try {
-			 jedis =  jedisCluster.getResource();
-			//生成真正的key
-			 String realKey  = prefix.getPrefix() + key;
-			return  jedis.decr(realKey);
-		 }finally {
-			  returnToCluster(jedis);
-		 }
+		//生成真正的key
+		 String realKey  = prefix.getPrefix() + key;
+		return  jedisCluster.decr(realKey);		 
 	}
 	
 	private <T> String beanToString(T value) {
@@ -130,11 +102,4 @@ public class RedisService {
 			return JSON.toJavaObject(JSON.parseObject(str), clazz);
 		}
 	}
-
-	private void returnToCluster(Jedis jedis) {
-		 if(jedis != null) {
-			 jedis.close();
-		 }
-	}
-
 }
