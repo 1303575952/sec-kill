@@ -4,13 +4,13 @@ import com.alibaba.fastjson.JSON;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisCluster;
 
 @Service
 public class RedisService {
 	
 	@Autowired
-    JedisPool jedisPool;
+    JedisCluster jedisCluster;
 	
 	/**
 	 * 获取单个对象
@@ -18,14 +18,14 @@ public class RedisService {
 	public <T> T get(KeyPrefix prefix, int key,  Class<T> clazz) {
 		 Jedis jedis = null;
 		 try {
-			 jedis =  jedisPool.getResource();
+			 jedis =  jedisCluster.getResource();
 			 //生成真正的key
 			 String realKey  = prefix.getPrefix() + key;
 			 String  str = jedis.get(realKey);
 			 T t =  stringToBean(str, clazz);
 			 return t;
 		 }finally {
-			  returnToPool(jedis);
+			  returnToCluster(jedis);
 		 }
 	}
 	
@@ -35,7 +35,7 @@ public class RedisService {
 	public <T> boolean set(KeyPrefix prefix, int key,  T value) {
 		 Jedis jedis = null;
 		 try {
-			 jedis =  jedisPool.getResource();
+			 jedis =  jedisCluster.getResource();
 			 String str = beanToString(value);
 			 if(str == null || str.length() <= 0) {
 				 return false;
@@ -50,7 +50,7 @@ public class RedisService {
 			 }
 			 return true;
 		 }finally {
-			  returnToPool(jedis);
+			  returnToCluster(jedis);
 		 }
 	}
 	
@@ -60,12 +60,12 @@ public class RedisService {
 	public <T> boolean exists(KeyPrefix prefix, String key) {
 		 Jedis jedis = null;
 		 try {
-			 jedis =  jedisPool.getResource();
+			 jedis =  jedisCluster.getResource();
 			//生成真正的key
 			 String realKey  = prefix.getPrefix() + key;
 			return  jedis.exists(realKey);
 		 }finally {
-			  returnToPool(jedis);
+			  returnToCluster(jedis);
 		 }
 	}
 	
@@ -75,12 +75,12 @@ public class RedisService {
 	public <T> Long incr(KeyPrefix prefix, String key) {
 		 Jedis jedis = null;
 		 try {
-			 jedis =  jedisPool.getResource();
+			 jedis =  jedisCluster.getResource();
 			//生成真正的key
 			 String realKey  = prefix.getPrefix() + key;
 			return  jedis.incr(realKey);
 		 }finally {
-			  returnToPool(jedis);
+			  returnToCluster(jedis);
 		 }
 	}
 	
@@ -90,12 +90,12 @@ public class RedisService {
 	public <T> Long decr(KeyPrefix prefix, String key) {
 		 Jedis jedis = null;
 		 try {
-			 jedis =  jedisPool.getResource();
+			 jedis =  jedisCluster.getResource();
 			//生成真正的key
 			 String realKey  = prefix.getPrefix() + key;
 			return  jedis.decr(realKey);
 		 }finally {
-			  returnToPool(jedis);
+			  returnToCluster(jedis);
 		 }
 	}
 	
@@ -131,7 +131,7 @@ public class RedisService {
 		}
 	}
 
-	private void returnToPool(Jedis jedis) {
+	private void returnToCluster(Jedis jedis) {
 		 if(jedis != null) {
 			 jedis.close();
 		 }
