@@ -5,7 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Order;
 import com.doudizu.seckill.domain.Product;
-import com.doudizu.seckill.redis.RedisService;
+import com.doudizu.seckill.redis.RedisClusterService;
+import com.doudizu.seckill.redis.RedisPoolService;
 import com.doudizu.seckill.service.OrderService;
 import com.doudizu.seckill.service.ProductService;
 import com.doudizu.seckill.util.HttpClient;
@@ -26,13 +27,16 @@ public class OrderController {
     PropertiesConf propertiesConf;
 
     @Autowired
-    RedisService redisService;
+    RedisClusterService redisDataService;
 
     @Autowired
     ProductService productService;
 
     @Autowired
     OrderService orderService;
+
+    @Autowired
+    RedisPoolService redisVerifyService;
 
     //全部订单接口
     @RequestMapping("/result")

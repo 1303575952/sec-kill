@@ -2,7 +2,7 @@ package com.doudizu.seckill.conf;
 
 import com.doudizu.seckill.domain.Product;
 import com.doudizu.seckill.redis.ProductKey;
-import com.doudizu.seckill.redis.RedisService;
+import com.doudizu.seckill.redis.RedisClusterService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class InitRedis implements InitializingBean {
 
     @Autowired
-    RedisService redisService;
+    RedisClusterService redisService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -25,7 +25,6 @@ public class InitRedis implements InitializingBean {
         /**
          * 从数据库中读数据加载到redis中 读多少
          */
-        /
         Product product = new Product();
         product.setPid(1);
         product.setDetail("this is 176467546 detail");
