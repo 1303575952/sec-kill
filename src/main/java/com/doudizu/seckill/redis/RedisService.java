@@ -3,7 +3,6 @@ package com.doudizu.seckill.redis;
 import com.alibaba.fastjson.JSON;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
 
 @Service
@@ -70,7 +69,24 @@ public class RedisService {
 		 String realKey  = prefix.getPrefix() + key;
 		return  jedisCluster.decr(realKey);		 
 	}
-	
+
+	/**
+	 * 清空redis
+	 */
+	public void flush()
+	{
+		jedisCluster.flushAll();
+	}
+
+	/**
+	 * 返回rediscluster实例
+	 * @return
+	 */
+	public JedisCluster getJedisCluster()
+	{
+		return this.jedisCluster;
+	}
+
 	private <T> String beanToString(T value) {
 		if(value == null) {
 			return null;
