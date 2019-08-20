@@ -3,8 +3,7 @@ package com.doudizu.seckill.controller;
 import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Product;
 import com.doudizu.seckill.redis.ProductKey;
-import com.doudizu.seckill.redis.RedisClusterService;
-import com.doudizu.seckill.redis.RedisPoolService;
+import com.doudizu.seckill.redis.RedisService;
 import com.doudizu.seckill.result.Result;
 import com.doudizu.seckill.service.OrderService;
 import com.doudizu.seckill.service.ProductService;
@@ -28,9 +27,7 @@ public class ProductController {
     @Autowired
     OrderService orderService;
     @Autowired
-    RedisClusterService redisDataService;
-    @Autowired
-    RedisPoolService redisVerifyService;
+    RedisService redisService;
 
 
     @GetMapping("/productTest")
@@ -50,7 +47,7 @@ public class ProductController {
     @RequestMapping("/product/redis")
     @ResponseBody
     public Product redisGet(@RequestParam("pid") int pid) {
-        Product product = redisDataService.get(ProductKey.getByPid, pid, Product.class);
+        Product product = redisService.get(ProductKey.getByPid, pid, Product.class);
         return product;
     }
 
@@ -60,7 +57,7 @@ public class ProductController {
         Product product = new Product();
         product.setPid(1);
         product.setDetail("this is detail");
-        redisDataService.set(ProductKey.getByPid, pid, product);//pid
+        redisService.set(ProductKey.getByPid, pid, product);//pid
         return Result.success(true);
     }
 
@@ -77,8 +74,6 @@ public class ProductController {
         }
         int p = productService.resetProduct();
         int o = orderService.clearOrder();
-        redisDataService.flush();
-        redisVerifyService.flush();
         log.info("p:" + p + ", o:" + o);
         if (p == propertiesConf.getProductCategory() && o == 0) {
             code = 0;

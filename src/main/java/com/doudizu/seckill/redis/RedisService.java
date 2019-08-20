@@ -7,7 +7,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 @Service
-public class RedisPoolService {
+public class RedisService {
 
 	@Autowired
 	JedisPool jedisPool;
@@ -78,8 +78,6 @@ public class RedisPoolService {
 			jedis =  jedisPool.getResource();
 			//生成真正的key
 			String realKey  = prefix.getPrefix() + key;
-
-
 			return  jedis.incr(realKey);
 		}finally {
 			returnToPool(jedis);
@@ -96,19 +94,6 @@ public class RedisPoolService {
 			//生成真正的key
 			String realKey  = prefix.getPrefix() + key;
 			return  jedis.decr(realKey);
-		}finally {
-			returnToPool(jedis);
-		}
-	}
-
-	/**
-	 * 清空数据库
-	 */
-	public void flush()	{
-		Jedis jedis = null;
-		try {
-			jedis =  jedisPool.getResource();
-			jedis.flushAll();
 		}finally {
 			returnToPool(jedis);
 		}
