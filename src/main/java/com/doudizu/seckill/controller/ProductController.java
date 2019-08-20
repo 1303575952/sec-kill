@@ -10,6 +10,8 @@ import com.doudizu.seckill.service.OrderService;
 import com.doudizu.seckill.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,9 +42,9 @@ public class ProductController {
     //商品信息接口
     @GetMapping("/product")
     @ResponseBody
-    public Product getProduct(@RequestParam("pid") int pid) {
+    public ResponseEntity getProduct(@RequestParam("pid") int pid) {
         Product product = productService.getProductByPid(pid);
-        return product;
+        return new ResponseEntity<>(product, HttpStatus.OK);
     }
 
     @RequestMapping("/product/redis")
@@ -65,13 +67,13 @@ public class ProductController {
     //状态复原接口接口
     @PostMapping("/reset")
     @ResponseBody
-    public Map reset(@RequestBody Map<String, String> map) {
+    public ResponseEntity<Map> reset(@RequestBody Map<String, String> map) {
         String token = map.get("token");
         Map<String, Object> returnMap = new HashMap<>();
         int code;
         if (!token.equals(propertiesConf.getResetToken())) {
             returnMap.put("code", 1);
-            return returnMap;
+            return new ResponseEntity<>(returnMap, HttpStatus.OK);
         }
         int p = productService.resetProduct();
         int o = orderService.clearOrder();
@@ -84,6 +86,6 @@ public class ProductController {
             code = 1;
         }
         returnMap.put("code", code);
-        return returnMap;
+        return new ResponseEntity<>(returnMap, HttpStatus.OK);
     }
 }
