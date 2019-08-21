@@ -47,7 +47,17 @@ public class ProductController {
     @RequestMapping("/product/redis")
     @ResponseBody
     public Product redisGet(@RequestParam("pid") int pid) {
-        Product product = redisService.get(ProductKey.getByPid, pid, Product.class);
+        boolean f=redisService.exists(ProductKey.getByPid,pid+"");
+        Product product=new Product();
+        if(f==true){
+            product = redisService.get(ProductKey.getByPid, pid, Product.class);
+            //System.out.println("select from redis");
+        }
+        else{
+            //System.out.println("query from mysql and insert into redis");
+            product=productService.getProductByPid(pid);
+            redisService.set(ProductKey.getByPid, pid, product);
+        }
         return product;
     }
 
