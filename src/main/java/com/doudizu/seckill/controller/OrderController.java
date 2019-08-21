@@ -93,12 +93,24 @@ public class OrderController {
     //支付接口
     @RequestMapping(value = "/pay", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<Map> payOrder(@RequestBody Map<String, String> map) {
+    public ResponseEntity<Map> payOrder(HttpServletRequest request, @RequestBody Map<String, String> map) {
         log.info(map.toString());
         Map<String, Object> returnMap = new HashMap<>();
         int uid = Integer.valueOf(map.get("uid"));
         int price = Integer.valueOf(map.get("price"));
         String orderId = map.get("order_id");
+        String sessionid = request.getHeader("sessionid");
+        log.info("sessionid为" + sessionid);
+        //拿到redis上sessionid对应的uid，即requestUid
+        int requestUid = Integer.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
+        log.info("requestUid:" + requestUid);
+        //判断请求的uid和参数中uid是否一致
+        //请求的uid和参数中uid不一致，返回403
+        if (requestUid != uid) {
+            return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
+        }
+        //请求的uid和参数中uid一致
+        //通过下面url获取token
         String url = propertiesConf.getPayUrl() + ":" + propertiesConf.getPayPort() + propertiesConf.getPayPath();
         JSONObject json = JsonGenerate.generatePayJsonString(uid, price, orderId);
         log.info(url);
