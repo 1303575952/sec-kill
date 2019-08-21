@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Order;
 import com.doudizu.seckill.domain.Product;
+import com.doudizu.seckill.rabbitmq.MQSender;
+import com.doudizu.seckill.rabbitmq.SeckillMessage;
 import com.doudizu.seckill.redis.OrderKey;
 import com.doudizu.seckill.redis.RedisService;
 import com.doudizu.seckill.service.OrderService;
@@ -37,6 +39,9 @@ public class OrderController {
 
     @Autowired
     RedisService redisService;
+
+    @Autowired
+    private MQSender sender;
 
     //全部订单接口
     @RequestMapping("/result")
@@ -87,6 +92,14 @@ public class OrderController {
         log.info("orderId:" + orderId);
         returnMap.put("code", 0);
         returnMap.put("order_id", orderId);
+
+        //入队
+        SeckillMessage message = new SeckillMessage();
+        message.setPid(pid);
+        message.setUid(uid);
+        message.setOrderId("" + System.currentTimeMillis() + pid + uid);
+        sender.sendSeckillMessage(message);
+
         return new ResponseEntity<>(returnMap, HttpStatus.OK);
     }
 
