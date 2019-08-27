@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 public class PropertiesConf {
+    @Value("${sharding.product}")
+    private int productTableCount;
     @Value("${pay.url}")
     private String payUrl;
     @Value("${pay.port}")
