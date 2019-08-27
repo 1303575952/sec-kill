@@ -6,6 +6,7 @@ import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Order;
 import com.doudizu.seckill.domain.Product;
 import com.doudizu.seckill.redis.OrderKey;
+import com.doudizu.seckill.redis.RedisClusterService;
 import com.doudizu.seckill.redis.RedisService;
 import com.doudizu.seckill.service.OrderService;
 import com.doudizu.seckill.service.ProductService;
@@ -37,6 +38,9 @@ public class OrderController {
 
     @Autowired
     RedisService redisService;
+
+    @Autowired
+    RedisClusterService redisClusterService;
 
     //全部订单接口
     @RequestMapping("/result")
