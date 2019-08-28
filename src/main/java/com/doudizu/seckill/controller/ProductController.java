@@ -2,6 +2,7 @@ package com.doudizu.seckill.controller;
 
 import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Product;
+import com.doudizu.seckill.redis.Data2Redis;
 import com.doudizu.seckill.redis.ProductKey;
 import com.doudizu.seckill.redis.RedisClusterService;
 import com.doudizu.seckill.redis.RedisService;
@@ -59,23 +60,6 @@ public class ProductController {
         }
     }
 
-    @RequestMapping("/product/redis")
-    @ResponseBody
-    public Product redisGet(@RequestParam("pid") int pid) {
-        Product product = redisService.get(ProductKey.getByPid, pid, Product.class);
-        return product;
-    }
-
-    @RequestMapping("/product/redis/set")
-    @ResponseBody
-    public Result<Boolean> redisSet(@RequestParam("pid") int pid) {
-        Product product = new Product();
-        product.setPid(1);
-        product.setDetail("this is detail");
-        redisService.set(ProductKey.getByPid, pid, product);//pid
-        return Result.success(true);
-    }
-
     //状态复原接口接口
     @PostMapping("/reset")
     @ResponseBody
@@ -90,7 +74,7 @@ public class ProductController {
         //log.info("开始reset");
         redisClusterService.flush();
         //log.info("集群reset完毕");
-        redisService.flush();
+        redisClusterService.flushcheat();
         returnMap.put("code", 0);
         return new ResponseEntity<>(returnMap, HttpStatus.OK);
     }

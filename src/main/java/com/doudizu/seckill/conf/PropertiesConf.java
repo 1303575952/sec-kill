@@ -22,6 +22,8 @@ public class PropertiesConf {
     @Value("${product.category}")
     private int productCategory;
 
+    @Value("${rediscluster.address0}")
+    private String redisclusterAddress0;
     @Value("${rediscluster.address1}")
     private String redisclusterAddress1;
     @Value("${rediscluster.address2}")

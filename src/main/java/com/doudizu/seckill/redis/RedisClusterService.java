@@ -7,7 +7,9 @@ import com.doudizu.seckill.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.Pipeline;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -33,6 +35,10 @@ public class RedisClusterService {
             //log.error("redis cluster get {key:" + key + "}", ex);
         }
         return null;
+    }
+
+    public void sadd(String key, String field) {
+        jedisCluster.sadd(key, field);
     }
 
     public boolean setproduct(String pid, String detail) {
@@ -102,7 +108,9 @@ public class RedisClusterService {
 
     public boolean set(String key, String value) {
         try {
-            jedisCluster.set(key, value);
+            System.out.println(jedisCluster.set(key, value));
+            System.out.println("key:" + key);
+            System.out.println("value:" + value);
             return true;
         } catch (Exception ex) {
             //log.error("redis cluster set {key:" + key + ",value:" + value + "}", ex);
@@ -352,6 +360,44 @@ public class RedisClusterService {
         if (jedisCluster.hlen("order:uid:" + uid) > propertiesConf.getRedisclusterMaxorder())
             return false;
         return true;
+    }
+
+    /**
+     * @param prefix uid 或者 IP
+     * @param value  对应的ID或者IP地址
+     * @return
+     */
+    public boolean verifypre(String prefix, String value) {
+
+        String cheatname = "cheat:" + prefix;
+        if (jedisCluster.sismember(cheatname, value))
+            return false;
+        Long current = System.currentTimeMillis() % propertiesConf.getRedisverifyTimes();
+
+        String timename = "Time:" + prefix + ":" + current;
+        String countname = "count:" + prefix;
+
+        if (jedisCluster.sismember(timename, value)) {
+            Long count = jedisCluster.hincrBy(countname, value, 1);
+            if (count > propertiesConf.getRedisverifyNum()) {
+                jedisCluster.sadd(cheatname, value);
+                return false;
+            }
+        } else {
+            jedisCluster.sadd(timename, value);
+            jedisCluster.expire(timename, propertiesConf.getRedisverifyTimes() * 2);
+            jedisCluster.hset(countname, value, String.valueOf(0));
+        }
+        return true;
+
+    }
+
+    public void flushcheat() {
+        jedisCluster.del("cheat:IP", "cheat:uid");
+    }
+
+    public boolean verifyall(String uid, String session, String IP) {
+        return uid.equals(jedisCluster.get(session)) && verifypre("uid", uid) && verifypre("IP", IP);
     }
 
     public <T> String beanToString(T value) {

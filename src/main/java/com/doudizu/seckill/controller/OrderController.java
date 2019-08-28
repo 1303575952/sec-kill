@@ -52,7 +52,7 @@ public class OrderController {
         String sessionid = request.getHeader("sessionid");
         log.info("sessionid:" + sessionid);
         //拿到redis上sessionid对应的uid
-        long requestUid = Long.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
+        long requestUid = Long.valueOf(redisClusterService.get(sessionid));
         String ip = request.getHeader("X-Forwarded-For");
         log.info("requestUid:" + requestUid + " ip:" + ip);
 
@@ -104,7 +104,7 @@ public class OrderController {
         String sessionid = request.getHeader("sessionid");
         //log.info("sessionid:" + sessionid);
         //拿到redis上sessionid对应的uid
-        long requestUid = Long.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
+        long requestUid = Long.valueOf(redisClusterService.get(sessionid));
         String ip = request.getHeader("X-Forwarded-For");
         //log.info("requestUid:" + requestUid + " ip:" + ip);
 
@@ -113,10 +113,10 @@ public class OrderController {
         //判断请求的uid和参数中uid是否一致,ip黑名单
         //请求的uid和参数中uid不一致,ip黑名单
 
-        if (!redisService.verifyall(uid, sessionid, ip) || !redisClusterService.verify(uid)) {
+        if (!redisClusterService.verifyall(uid, sessionid, ip) || !redisClusterService.verify(uid)) {
             //log.info("作弊用户" + "uid:" + uid + " ip:" + ip + " sessionid:" + sessionid);
-            redisService.sadd("cheat:IP", ip);
-            redisService.sadd("cheat:uid", uid);
+            redisClusterService.sadd("cheat:IP", ip);
+            redisClusterService.sadd("cheat:uid", uid);
             return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
         }
         if (redisClusterService.createorder(uid, pidStr, order_id)) {
@@ -142,14 +142,14 @@ public class OrderController {
         String sessionid = request.getHeader("sessionid");
         //log.info("sessionid:" + sessionid);
         //拿到redis上sessionid对应的uid
-        long requestUid = Long.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
+        long requestUid = Long.valueOf(redisClusterService.get(sessionid));
         String ip = request.getHeader("X-Forwarded-For");
         //log.info("requestUid:" + requestUid + " ip:" + ip);
 
         //判断请求的uid和参数中uid是否一致,ip黑名单
         //请求的uid和参数中uid不一致,ip黑名单
 
-        if (!redisService.verifyall(uid, sessionid, ip)) {
+        if (!redisClusterService.verifyall(uid, sessionid, ip)) {
             //log.info("作弊用户" + "uid:" + uid + " ip:" + ip + " sessionid:" + sessionid);
             return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
         }
@@ -157,8 +157,8 @@ public class OrderController {
         String pidStr = strOrderArr[1];
         String str = redisClusterService.getproduct(pidStr);
         if (str == null) {
-            redisService.sadd("cheat:IP", ip);
-            redisService.sadd("cheat:uid", uid);
+            redisClusterService.sadd("cheat:IP", ip);
+            redisClusterService.sadd("cheat:uid", uid);
 
             return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
         }
@@ -166,8 +166,8 @@ public class OrderController {
         String[] strArr = str.split("-");
         int realPrice = Integer.valueOf(strArr[1]);
         if (price != realPrice) {
-            redisService.sadd("cheat:IP", ip);
-            redisService.sadd("cheat:uid", uid);
+            redisClusterService.sadd("cheat:IP", ip);
+            redisClusterService.sadd("cheat:uid", uid);
 
             return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
         }
@@ -191,8 +191,8 @@ public class OrderController {
             returnMap.put("token", token);
             return new ResponseEntity<>(returnMap, HttpStatus.OK);
         } else {
-            redisService.sadd("cheat:IP", ip);
-            redisService.sadd("cheat:uid", uid);
+            redisClusterService.sadd("cheat:IP", ip);
+            redisClusterService.sadd("cheat:uid", uid);
             returnMap.put("code", 1);
             return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
         }

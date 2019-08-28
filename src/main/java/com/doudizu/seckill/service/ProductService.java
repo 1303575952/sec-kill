@@ -41,7 +41,7 @@ public class ProductService {
     }
 
     //拿到部分商品数据
-    public List<Product> getSomeProduct(String productTable, int startLine, int endLine) {
-        return productDao.getSomeProduct(productTable, startLine, endLine);
+    public List<Product> getSomeProduct(String productTable, int startLine, int lineCount) {
+        return productDao.getSomeProduct(productTable, startLine, lineCount);
     }
 }

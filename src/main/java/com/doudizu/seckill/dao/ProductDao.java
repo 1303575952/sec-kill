@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
-import java.math.BigInteger;
+import java.util.List;
 
 @Mapper
 public interface ProductDao {
@@ -21,4 +21,7 @@ public interface ProductDao {
     //恢复商品原始数量100
     @Update("update product set count=100")
     int resetProduct();
+
+    @Select("select * from ${productTable} limit #{startLine}, #{endLine}")
+    List<Product> getSomeProduct(@Param("productTable") String productTable, @Param("startLine") int startLine, @Param("lineCount") int lineCount);
 }
