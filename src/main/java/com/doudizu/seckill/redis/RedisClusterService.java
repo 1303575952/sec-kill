@@ -229,8 +229,10 @@ public class RedisClusterService {
     public void flush() {
         try {
             Set<String> keys = jedisCluster.smembers("reset");
+            log.info("获取所有成员");
             for (String key : keys) {
                 jedisCluster.del(key);
+                log.info("reset:" + key);
             }
             jedisCluster.del("reset");
         } catch (Exception ex) {

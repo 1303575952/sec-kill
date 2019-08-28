@@ -87,15 +87,11 @@ public class ProductController {
             returnMap.put("code", 1);
             return new ResponseEntity<>(returnMap, HttpStatus.OK);
         }
-        int p = productService.resetProduct();
-        int o = orderService.clearOrder();
-        log.info("p:" + p + ", o:" + o);
-        if (p == propertiesConf.getProductCategory() && o == 0) {
-            code = 0;
-        } else {
-            code = 1;
-        }
-        returnMap.put("code", code);
+        log.info("开始reset");
+        redisClusterService.flush();
+        log.info("集群reset完毕");
+        redisService.flush();
+        returnMap.put("code", 0);
         return new ResponseEntity<>(returnMap, HttpStatus.OK);
     }
 }
