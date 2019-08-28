@@ -3,6 +3,7 @@ package com.doudizu.seckill.controller;
 import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Product;
 import com.doudizu.seckill.redis.ProductKey;
+import com.doudizu.seckill.redis.RedisClusterService;
 import com.doudizu.seckill.redis.RedisService;
 import com.doudizu.seckill.result.Result;
 import com.doudizu.seckill.service.OrderService;
@@ -29,7 +30,8 @@ public class ProductController {
     OrderService orderService;
     @Autowired
     RedisService redisService;
-
+    @Autowired
+    RedisClusterService redisClusterService;
 
     @GetMapping("/productTest")
     @ResponseBody
@@ -41,9 +43,20 @@ public class ProductController {
     @GetMapping("/product")
     @ResponseBody
     public ResponseEntity getProduct(@RequestParam("pid") long pid) {
+        //redisClusterService.setproduct("111", "222");
         log.info("pid:" + pid);
-        Product product = productService.getProductByPid(pid);
-        return new ResponseEntity<>(product, HttpStatus.OK);
+        String res = redisClusterService.getproduct(String.valueOf(pid));
+        if (res == null) {
+            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        } else {
+            Product product = new Product();
+            String[] strArr = res.split("-");
+            product.setPid(pid);
+            product.setCount(Integer.valueOf(strArr[0]));
+            product.setPrice(Integer.valueOf(strArr[1]));
+            product.setDetail(strArr[2]);
+            return new ResponseEntity<>(product, HttpStatus.OK);
+        }
     }
 
     @RequestMapping("/product/redis")
