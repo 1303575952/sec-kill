@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Order;
+import com.doudizu.seckill.domain.OrderInfo;
 import com.doudizu.seckill.domain.Product;
 import com.doudizu.seckill.redis.OrderKey;
 import com.doudizu.seckill.redis.RedisClusterService;
@@ -21,9 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Controller
@@ -46,11 +45,55 @@ public class OrderController {
     //全部订单接口
     @RequestMapping("/result")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getOrdersByUid(@RequestParam("uid") int uid) {
+    public ResponseEntity<Map<String, Object>> getOrdersByUid(HttpServletRequest request, @RequestParam("uid") long uid) {
+        String uidStr = String.valueOf(uid);
         Map<String, Object> returnMap = new HashMap<>();
-        returnMap.put("data", orderService.getOrdersByUid(uid));
+        log.info(request.getQueryString());
+        String sessionid = request.getHeader("sessionid");
+        log.info("sessionid:" + sessionid);
+        //拿到redis上sessionid对应的uid
+        long requestUid = Long.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
+        String ip = request.getHeader("X-Forwarded-For");
+        log.info("requestUid:" + requestUid + " ip:" + ip);
+
+        String[] arr = redisClusterService.getallorder(uidStr);
+        log.info("arr.lenth()" + arr.length);
+        /*for (int i = 0; i < arr.length; i++) {
+            log.info(arr[i]);
+        }*/
+        //pid-price-detail-status-order_id-token
+        log.info("新建orderinfo");
+        OrderInfo[] orderInfos = new OrderInfo[arr.length];
+        log.info("建立完毕");
+        for (int i = 0; i < arr.length; i++) {
+            String[] strArr = arr[i].split("-");
+            log.info("strArr.length:" + strArr.length);
+            orderInfos[i] = new OrderInfo();
+            orderInfos[i].setUid(uid);
+            orderInfos[i].setPid(Long.valueOf(strArr[0]));
+            orderInfos[i].setPrice(Integer.valueOf(strArr[1]));
+            orderInfos[i].setDetail(strArr[2]);
+            orderInfos[i].setStatus(Integer.valueOf(strArr[3]));
+            orderInfos[i].setOrderId(strArr[4]);
+            if (strArr.length == 6) {
+                orderInfos[i].setToken(strArr[5]);
+            } else {
+                orderInfos[i].setToken("");
+            }
+        }
+        log.info("开始排序");
+        Arrays.sort(orderInfos);
+        log.info("排序完成");
+        List<OrderInfo> list = new ArrayList<>();
+        for (int i = 0; i < arr.length; i++) {
+            list.add(orderInfos[i]);
+            log.info("array:" + i + list.get(i).toString());
+        }
+        returnMap.put("data", list);
+        //returnMap.put("data", orderService.getOrdersByUid(uid));
         return new ResponseEntity<>(returnMap, HttpStatus.OK);
     }
+
 
     //订单接口
     @RequestMapping(value = "/order", method = RequestMethod.POST)
