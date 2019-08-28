@@ -74,6 +74,8 @@ public class OrderController {
 
         if (!redisService.verifyall(uid, sessionid, ip) || !redisClusterService.verify(uid)) {
             log.info("作弊用户" + "uid:" + uid + " ip:" + ip + " sessionid:" + sessionid);
+            redisService.sadd("cheat:IP", ip);
+            redisService.sadd("cheat:uid", uid);
             return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
         }
         if (redisClusterService.createorder(uid, pidStr, order_id)) {
@@ -84,30 +86,6 @@ public class OrderController {
             returnMap.put("code", 1);
             log.info("下单失败" + order_id);
         }
-
-        //请求的uid和参数中uid一致
-        //判断库存
-        /*Product product = productService.getProductByPid(pid);
-        int stock = product.getCount();
-        if (stock <= 0) {
-            log.info("商品" + pid + "库存不够，不可下单");
-            returnMap.put("code", 1);
-            return new ResponseEntity<>(returnMap, HttpStatus.OK);
-        }*/
-
-        /*List<Order> orders = orderService.getOrderByUidAndPid(uid, pid);
-        if (orders.size() >= 1) {
-            log.info("商品" + pid + "用户" + uid + "已经购买过");
-            returnMap.put("code", 1);
-            log.info(JSONObject.toJSON(returnMap).toString());
-            return new ResponseEntity<>(returnMap, HttpStatus.OK);
-        }
-        //减库存 下订单 写入秒杀订单
-        log.info("商品" + pid + "用户" + uid + "可下单");
-        String orderId = orderService.createOrder(uid, pid);
-        log.info("orderId:" + orderId);
-        returnMap.put("code", 0);
-        returnMap.put("order_id", orderId);*/
         return new ResponseEntity<>(returnMap, HttpStatus.OK);
     }
 
