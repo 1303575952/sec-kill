@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +40,8 @@ public class ProductController {
     //商品信息接口
     @GetMapping("/product")
     @ResponseBody
-    public ResponseEntity getProduct(@RequestParam("pid") int pid) {
+    public ResponseEntity getProduct(@RequestParam("pid") long pid) {
+        log.info("pid:" + pid);
         Product product = productService.getProductByPid(pid);
         return new ResponseEntity<>(product, HttpStatus.OK);
     }

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class OrderController {
         Map<String, Object> returnMap = new HashMap<>();
         log.info(request.getQueryString());
         int uid = Integer.valueOf(map.get("uid"));
-        int pid = Integer.valueOf(map.get("pid"));
+        long pid = Long.valueOf(map.get("pid"));
         String sessionid = request.getHeader("sessionid");
         log.info("sessionid:" + sessionid);
         //拿到redis上sessionid对应的uid
