@@ -44,7 +44,7 @@ public class ProductController {
     @ResponseBody
     public ResponseEntity getProduct(@RequestParam("pid") long pid) {
         //redisClusterService.setproduct("111", "222");
-        log.info("pid:" + pid);
+        //log.info("pid:" + pid);
         String res = redisClusterService.getproduct(String.valueOf(pid));
         if (res == null) {
             return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
@@ -87,9 +87,9 @@ public class ProductController {
             returnMap.put("code", 1);
             return new ResponseEntity<>(returnMap, HttpStatus.OK);
         }
-        log.info("开始reset");
+        //log.info("开始reset");
         redisClusterService.flush();
-        log.info("集群reset完毕");
+        //log.info("集群reset完毕");
         redisService.flush();
         returnMap.put("code", 0);
         return new ResponseEntity<>(returnMap, HttpStatus.OK);

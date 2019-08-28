@@ -30,7 +30,7 @@ public class RedisClusterService {
             str = jedisCluster.get(key);
             return str;
         } catch (Exception ex) {
-            log.error("redis cluster get {key:" + key + "}", ex);
+            //log.error("redis cluster get {key:" + key + "}", ex);
         }
         return null;
     }
@@ -38,10 +38,10 @@ public class RedisClusterService {
     public boolean setproduct(String pid, String detail) {
         try {
             String res = jedisCluster.set(pid, detail, "nx", "ex", propertiesConf.getRedisclusterProductlife());
-            log.info("setProduct res:" + pid + " " + res);
+            //log.info("setProduct res:" + pid + " " + res);
             return true;
         } catch (Exception ex) {
-            log.error("redis cluster setproduct {key:" + pid + ",detail:" + detail, ex);
+            //log.error("redis cluster setproduct {key:" + pid + ",detail:" + detail, ex);
         }
         return false;
     }
@@ -55,7 +55,7 @@ public class RedisClusterService {
             setproduct(pid, detail);
             return detail;
         } catch (Exception ex) {
-            log.error("redis cluster fromMySQL {pid:" + pid + "}", ex);
+            //log.error("redis cluster fromMySQL {pid:" + pid + "}", ex);
         }
         return null;
     }
@@ -75,7 +75,7 @@ public class RedisClusterService {
             }
             return res;
         } catch (Exception ex) {
-            log.error("redis cluster get product detail {key:" + pid + "}", ex);
+            //log.error("redis cluster get product detail {key:" + pid + "}", ex);
         }
         return null;
     }
@@ -94,7 +94,7 @@ public class RedisClusterService {
             long count = propertiesConf.getRedisclusterProductnum() - jedisCluster.scard("order:pid:" + pid);
             return count + "-" + product;
         } catch (Exception ex) {
-            log.error("redis cluster get product {key:" + pid + "}", ex);
+            //log.error("redis cluster get product {key:" + pid + "}", ex);
         }
         return null;
     }
@@ -105,7 +105,7 @@ public class RedisClusterService {
             jedisCluster.set(key, value);
             return true;
         } catch (Exception ex) {
-            log.error("redis cluster set {key:" + key + ",value:" + value + "}", ex);
+            //log.error("redis cluster set {key:" + key + ",value:" + value + "}", ex);
         }
         return false;
     }
@@ -113,18 +113,18 @@ public class RedisClusterService {
     public boolean existsproduct(String pid) {
         try {
             if (jedisCluster.exists(pid)) {
-                log.info("pid存在:" + pid);
+                //log.info("pid存在:" + pid);
                 return true;
             }
             String detail = fromMySQL(pid);
             if (detail == null) {
-                log.info("MySQL中无数据");
+                //log.info("MySQL中无数据");
                 return false;
             }
             setproduct(pid, detail);
             return true;
         } catch (Exception ex) {
-            log.error("redis cluster exists product{pid:" + pid + "}", ex);
+            //log.error("redis cluster exists product{pid:" + pid + "}", ex);
         }
         return false;
     }
@@ -133,7 +133,7 @@ public class RedisClusterService {
         try {
             return jedisCluster.incr(key);
         } catch (Exception ex) {
-            log.error("redis cluster incr {key:" + key + "}", ex);
+            //log.error("redis cluster incr {key:" + key + "}", ex);
         }
         return Long.MIN_VALUE;
     }
@@ -142,7 +142,7 @@ public class RedisClusterService {
         try {
             return jedisCluster.decr(key);
         } catch (Exception ex) {
-            log.error("redis cluster decr {key:" + key + "}", ex);
+            //log.error("redis cluster decr {key:" + key + "}", ex);
         }
         return Long.MAX_VALUE;
     }
@@ -183,7 +183,7 @@ public class RedisClusterService {
             jedisCluster.sadd("reset", payuid);
             return true;
         } catch (Exception ex) {
-            log.error("redis cluster create pay {uid:" + uid + ",pid:" + pid);
+            //log.error("redis cluster create pay {uid:" + uid + ",pid:" + pid);
         }
         return false;
     }
@@ -200,18 +200,18 @@ public class RedisClusterService {
             String lockvalue = getlockvalue(uid);
             //进入临界区
             if (!lock(lockkey, lockvalue)) {
-                log.info("获取锁失败");
+                //log.info("获取锁失败");
                 return false;
             }
             log.info("已获取到锁");
             //可以删除,但是有可能会超订
             if (jedisCluster.sismember(orderpid, uid) || jedisCluster.scard(orderpid) >= propertiesConf.getRedisclusterProductnum()) {
                 releaselock(lockkey, lockvalue);
-                log.info("重复下单");
+                //log.info("重复下单");
                 return false;
             }
             jedisCluster.sadd(orderpid, uid);
-            log.info("正常下单" + orderpid);
+            //log.info("正常下单" + orderpid);
             releaselock(lockkey, lockvalue);
 
             jedisCluster.hset(orderuid, pid, order_id);
@@ -229,7 +229,7 @@ public class RedisClusterService {
     public void flush() {
         try {
             Set<String> keys = jedisCluster.smembers("reset");
-            log.info("获取所有成员");
+            //log.info("获取所有成员");
             for (String key : keys) {
                 jedisCluster.del(key);
                 log.info("reset:" + key);

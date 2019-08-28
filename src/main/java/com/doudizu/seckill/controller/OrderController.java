@@ -81,13 +81,11 @@ public class OrderController {
                 orderInfos[i].setToken("");
             }
         }
-        log.info("开始排序");
         Arrays.sort(orderInfos);
-        log.info("排序完成");
         List<OrderInfo> list = new ArrayList<>();
         for (int i = 0; i < arr.length; i++) {
             list.add(orderInfos[i]);
-            log.info("array:" + i + list.get(i).toString());
+            //log.info("array:" + i + list.get(i).toString());
         }
         returnMap.put("data", list);
         //returnMap.put("data", orderService.getOrdersByUid(uid));
@@ -100,15 +98,15 @@ public class OrderController {
     @ResponseBody
     public ResponseEntity<Map> createOrder(HttpServletRequest request, @RequestBody Map<String, String> map) {
         Map<String, Object> returnMap = new HashMap<>();
-        log.info(request.getQueryString());
+        //log.info(request.getQueryString());
         String uid = map.get("uid");
         String pidStr = map.get("pid");
         String sessionid = request.getHeader("sessionid");
-        log.info("sessionid:" + sessionid);
+        //log.info("sessionid:" + sessionid);
         //拿到redis上sessionid对应的uid
         long requestUid = Long.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
         String ip = request.getHeader("X-Forwarded-For");
-        log.info("requestUid:" + requestUid + " ip:" + ip);
+        //log.info("requestUid:" + requestUid + " ip:" + ip);
 
         String order_id = uid + "~" + pidStr + "~" + System.currentTimeMillis() / 1000;
 
@@ -116,7 +114,7 @@ public class OrderController {
         //请求的uid和参数中uid不一致,ip黑名单
 
         if (!redisService.verifyall(uid, sessionid, ip) || !redisClusterService.verify(uid)) {
-            log.info("作弊用户" + "uid:" + uid + " ip:" + ip + " sessionid:" + sessionid);
+            //log.info("作弊用户" + "uid:" + uid + " ip:" + ip + " sessionid:" + sessionid);
             redisService.sadd("cheat:IP", ip);
             redisService.sadd("cheat:uid", uid);
             return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
@@ -124,10 +122,10 @@ public class OrderController {
         if (redisClusterService.createorder(uid, pidStr, order_id)) {
             returnMap.put("code", 0);
             returnMap.put("order_id", order_id);
-            log.info("下单成功" + order_id);
+            //log.info("下单成功" + order_id);
         } else {
             returnMap.put("code", 1);
-            log.info("下单失败" + order_id);
+            //log.info("下单失败" + order_id);
         }
         return new ResponseEntity<>(returnMap, HttpStatus.OK);
     }
@@ -137,22 +135,22 @@ public class OrderController {
     @ResponseBody
     public ResponseEntity<Map> payOrder(HttpServletRequest request, @RequestBody Map<String, String> map) {
         Map<String, Object> returnMap = new HashMap<>();
-        log.info(request.getQueryString());
+        //log.info(request.getQueryString());
         String uid = map.get("uid");
         String orderId = map.get("order_id");
         int price = Integer.valueOf(map.get("price"));
         String sessionid = request.getHeader("sessionid");
-        log.info("sessionid:" + sessionid);
+        //log.info("sessionid:" + sessionid);
         //拿到redis上sessionid对应的uid
         long requestUid = Long.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
         String ip = request.getHeader("X-Forwarded-For");
-        log.info("requestUid:" + requestUid + " ip:" + ip);
+        //log.info("requestUid:" + requestUid + " ip:" + ip);
 
         //判断请求的uid和参数中uid是否一致,ip黑名单
         //请求的uid和参数中uid不一致,ip黑名单
 
         if (!redisService.verifyall(uid, sessionid, ip)) {
-            log.info("作弊用户" + "uid:" + uid + " ip:" + ip + " sessionid:" + sessionid);
+            //log.info("作弊用户" + "uid:" + uid + " ip:" + ip + " sessionid:" + sessionid);
             return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
         }
         String[] strOrderArr = orderId.split("~");
@@ -182,10 +180,10 @@ public class OrderController {
         //通过下面url获取token
         String url = propertiesConf.getPayUrl() + ":" + propertiesConf.getPayPort() + propertiesConf.getPayPath();
         JSONObject json = JsonGenerate.generatePayJsonString(Long.valueOf(uid), price, orderId);
-        log.info(url);
-        log.info(json.toString());
+        //log.info(url);
+        //log.info(json.toString());
         String tokenJsonStr = HttpClient.httpPostWithJSON(url, json.toString());
-        log.info(tokenJsonStr);
+        //log.info(tokenJsonStr);
         JSONObject tokenJson = JSON.parseObject(tokenJsonStr);
         String token = (String) tokenJson.get("token");
         if (redisClusterService.createpay(uid, pidStr, token)) {

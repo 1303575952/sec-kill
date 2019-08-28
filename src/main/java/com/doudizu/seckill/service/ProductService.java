@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -37,5 +38,10 @@ public class ProductService {
     //恢复商品原始数量100，返回数据为商品总数量
     public int resetProduct() {
         return productDao.resetProduct();
+    }
+
+    //拿到部分商品数据
+    public List<Product> getSomeProduct(String productTable, int startLine, int endLine) {
+        return productDao.getSomeProduct(productTable, startLine, endLine);
     }
 }
