@@ -112,11 +112,15 @@ public class RedisClusterService {
 
     public boolean existsproduct(String pid) {
         try {
-            if (jedisCluster.exists(pid))
+            if (jedisCluster.exists(pid)) {
+                log.info("pid存在:" + pid);
                 return true;
+            }
             String detail = fromMySQL(pid);
-            if (detail == null)
+            if (detail == null) {
+                log.info("MySQL中无数据");
                 return false;
+            }
             setproduct(pid, detail);
             return true;
         } catch (Exception ex) {
@@ -149,7 +153,7 @@ public class RedisClusterService {
             String orderpid = "order:pid:" + pid;
             String orderuid = "order:uid:" + uid;
             String payuid = "pay:uid:" + uid;
-            if (verify(uid) || !existsproduct(pid) || !jedisCluster.sismember(orderpid, uid))
+            if (!existsproduct(pid) || !jedisCluster.sismember(orderpid, uid))
                 return false;
             /*String lockkey = getlockkey("pay",pid);
             String lockvalue = getlockvalue(uid);
@@ -179,21 +183,26 @@ public class RedisClusterService {
         try {
             String orderpid = "order:pid:" + pid;
             String orderuid = "order:uid:" + uid;
-            if (verify(uid) || !existsproduct(pid) || jedisCluster.sismember(orderpid, uid) ||
-                    jedisCluster.scard(orderpid) >= propertiesConf.getRedisclusterProductnum())
+            if (!existsproduct(pid) || jedisCluster.sismember(orderpid, uid) ||
+                    jedisCluster.scard(orderpid) >= propertiesConf.getRedisclusterProductnum()) {
                 return false;
+            }
             String lockkey = getlockkey("order", pid);
             String lockvalue = getlockvalue(uid);
             //进入临界区
-            if (!lock(lockkey, lockvalue))
+            if (!lock(lockkey, lockvalue)) {
+                log.info("获取锁失败");
                 return false;
-
+            }
+            log.info("已获取到锁");
             //可以删除,但是有可能会超订
             if (jedisCluster.sismember(orderpid, uid) || jedisCluster.scard(orderpid) >= propertiesConf.getRedisclusterProductnum()) {
                 releaselock(lockkey, lockvalue);
+                log.info("重复下单");
                 return false;
             }
             jedisCluster.sadd(orderpid, uid);
+            log.info("正常下单" + orderpid);
             releaselock(lockkey, lockvalue);
 
             jedisCluster.hset(orderuid, pid, order_id);
@@ -328,7 +337,7 @@ public class RedisClusterService {
      * @param uid
      * @return
      */
-    private boolean verify(String uid) {
+    public boolean verify(String uid) {
         if (jedisCluster.hlen("order:uid:" + uid) > propertiesConf.getRedisclusterMaxorder())
             return false;
         return true;

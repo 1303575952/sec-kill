@@ -6,6 +6,7 @@ import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Order;
 import com.doudizu.seckill.domain.Product;
 import com.doudizu.seckill.redis.OrderKey;
+import com.doudizu.seckill.redis.RedisClusterService;
 import com.doudizu.seckill.redis.RedisService;
 import com.doudizu.seckill.service.OrderService;
 import com.doudizu.seckill.service.ProductService;
@@ -39,6 +40,9 @@ public class OrderController {
     @Autowired
     RedisService redisService;
 
+    @Autowired
+    RedisClusterService redisClusterService;
+
     //全部订单接口
     @RequestMapping("/result")
     @ResponseBody
@@ -48,34 +52,50 @@ public class OrderController {
         return new ResponseEntity<>(returnMap, HttpStatus.OK);
     }
 
+    //订单接口
     @RequestMapping(value = "/order", method = RequestMethod.POST)
     @ResponseBody
     public ResponseEntity<Map> createOrder(HttpServletRequest request, @RequestBody Map<String, String> map) {
         Map<String, Object> returnMap = new HashMap<>();
         log.info(request.getQueryString());
-        int uid = Integer.valueOf(map.get("uid"));
-        long pid = Long.valueOf(map.get("pid"));
+        String uid = map.get("uid");
+        String pidStr = map.get("pid");
         String sessionid = request.getHeader("sessionid");
         log.info("sessionid:" + sessionid);
         //拿到redis上sessionid对应的uid
-        int requestUid = Integer.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
-        log.info("requestUid:" + requestUid);
-        //判断请求的uid和参数中uid是否一致
-        //请求的uid和参数中uid不一致
-        if (requestUid != uid) {
+        long requestUid = Long.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
+        String ip = request.getHeader("X-Forwarded-For");
+        log.info("requestUid:" + requestUid + " ip:" + ip);
+
+        String order_id = uid + "~" + pidStr + "~" + System.currentTimeMillis() / 1000;
+
+        //判断请求的uid和参数中uid是否一致,ip黑名单
+        //请求的uid和参数中uid不一致,ip黑名单
+
+        if (!redisService.verifyall(uid, sessionid, ip) || !redisClusterService.verify(uid)) {
+            log.info("作弊用户" + "uid:" + uid + " ip:" + ip + " sessionid:" + sessionid);
             return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
         }
+        if (redisClusterService.createorder(uid, pidStr, order_id)) {
+            returnMap.put("code", 0);
+            returnMap.put("order_id", order_id);
+            log.info("下单成功" + order_id);
+        } else {
+            returnMap.put("code", 1);
+            log.info("下单失败" + order_id);
+        }
+
         //请求的uid和参数中uid一致
         //判断库存
-        Product product = productService.getProductByPid(pid);
+        /*Product product = productService.getProductByPid(pid);
         int stock = product.getCount();
         if (stock <= 0) {
             log.info("商品" + pid + "库存不够，不可下单");
             returnMap.put("code", 1);
             return new ResponseEntity<>(returnMap, HttpStatus.OK);
-        }
-        //判断是否可秒杀（已购买过）
-        List<Order> orders = orderService.getOrderByUidAndPid(uid, pid);
+        }*/
+
+        /*List<Order> orders = orderService.getOrderByUidAndPid(uid, pid);
         if (orders.size() >= 1) {
             log.info("商品" + pid + "用户" + uid + "已经购买过");
             returnMap.put("code", 1);
@@ -87,7 +107,7 @@ public class OrderController {
         String orderId = orderService.createOrder(uid, pid);
         log.info("orderId:" + orderId);
         returnMap.put("code", 0);
-        returnMap.put("order_id", orderId);
+        returnMap.put("order_id", orderId);*/
         return new ResponseEntity<>(returnMap, HttpStatus.OK);
     }
 
