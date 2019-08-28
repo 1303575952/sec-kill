@@ -115,41 +115,68 @@ public class OrderController {
     @RequestMapping(value = "/pay", method = RequestMethod.POST)
     @ResponseBody
     public ResponseEntity<Map> payOrder(HttpServletRequest request, @RequestBody Map<String, String> map) {
-        log.info(map.toString());
         Map<String, Object> returnMap = new HashMap<>();
-        int uid = Integer.valueOf(map.get("uid"));
-        int price = Integer.valueOf(map.get("price"));
+        log.info(request.getQueryString());
+        String uid = map.get("uid");
         String orderId = map.get("order_id");
+        int price = Integer.valueOf(map.get("price"));
         String sessionid = request.getHeader("sessionid");
-        log.info("sessionid为" + sessionid);
-        //拿到redis上sessionid对应的uid，即requestUid
-        int requestUid = Integer.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
-        log.info("requestUid:" + requestUid);
-        //判断请求的uid和参数中uid是否一致
-        //请求的uid和参数中uid不一致，返回403
-        if (requestUid != uid) {
+        log.info("sessionid:" + sessionid);
+        //拿到redis上sessionid对应的uid
+        long requestUid = Long.valueOf(redisService.getKey(OrderKey.getByOrderId, sessionid));
+        String ip = request.getHeader("X-Forwarded-For");
+        log.info("requestUid:" + requestUid + " ip:" + ip);
+
+        //判断请求的uid和参数中uid是否一致,ip黑名单
+        //请求的uid和参数中uid不一致,ip黑名单
+
+        if (!redisService.verifyall(uid, sessionid, ip)) {
+            log.info("作弊用户" + "uid:" + uid + " ip:" + ip + " sessionid:" + sessionid);
             return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
         }
-        //请求的uid和参数中uid一致
+        String[] strOrderArr = orderId.split("~");
+        String pidStr = strOrderArr[1];
+        String str = redisClusterService.getproduct(pidStr);
+        if (str == null) {
+            redisService.sadd("cheat:IP", ip);
+            redisService.sadd("cheat:uid", uid);
+
+            return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
+        }
+
+        String[] strArr = str.split("-");
+        int realPrice = Integer.valueOf(strArr[1]);
+        if (price != realPrice) {
+            redisService.sadd("cheat:IP", ip);
+            redisService.sadd("cheat:uid", uid);
+
+            return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
+        }
+        int count = Integer.valueOf(strArr[0]);
+        if (count <= 0) {
+            returnMap.put("code", 1);
+            return new ResponseEntity<>(returnMap, HttpStatus.OK);
+        }
+
         //通过下面url获取token
         String url = propertiesConf.getPayUrl() + ":" + propertiesConf.getPayPort() + propertiesConf.getPayPath();
-        JSONObject json = JsonGenerate.generatePayJsonString(uid, price, orderId);
+        JSONObject json = JsonGenerate.generatePayJsonString(Long.valueOf(uid), price, orderId);
         log.info(url);
         log.info(json.toString());
         String tokenJsonStr = HttpClient.httpPostWithJSON(url, json.toString());
         log.info(tokenJsonStr);
         JSONObject tokenJson = JSON.parseObject(tokenJsonStr);
         String token = (String) tokenJson.get("token");
-        int code = orderService.payOrder(token, uid, price, orderId);
-        log.info("code:" + code);
-        log.info("token:" + token);
-        if (code == 0) {
-            returnMap.put("code", code);
+        if (redisClusterService.createpay(uid, pidStr, token)) {
+            returnMap.put("code", 0);
             returnMap.put("token", token);
+            return new ResponseEntity<>(returnMap, HttpStatus.OK);
         } else {
-            returnMap.put("code", code);
+            redisService.sadd("cheat:IP", ip);
+            redisService.sadd("cheat:uid", uid);
+            returnMap.put("code", 1);
+            return new ResponseEntity<>(returnMap, HttpStatus.FORBIDDEN);
         }
-        log.info(JSON.toJSONString(returnMap));
-        return new ResponseEntity<>(returnMap, HttpStatus.OK);
+
     }
 }

@@ -143,6 +143,15 @@ public class RedisService {
         }
     }
 
+    public void sadd(String key,String field){
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            jedis.sadd(key,field);
+        } finally {
+            returnToPool(jedis);
+        }
+    }
     /**
      * @param prefix uid 或者 IP
      * @param value  对应的ID或者IP地址

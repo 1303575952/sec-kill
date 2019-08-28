@@ -147,6 +147,15 @@ public class RedisClusterService {
         return Long.MAX_VALUE;
     }
 
+    public String getOrderId(String uid, String pid) {
+        String orderuid = "order:uid:" + uid;
+        String res = jedisCluster.hget(orderuid, pid);
+        if (res == null) {
+            return null;
+        }
+        String[] strArr = res.split("~");
+        return strArr[2];
+    }
 
     public boolean createpay(String uid, String pid, String token) {
         try {
