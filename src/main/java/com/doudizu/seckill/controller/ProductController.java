@@ -2,11 +2,8 @@ package com.doudizu.seckill.controller;
 
 import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Product;
-import com.doudizu.seckill.redis.Data2Redis;
-import com.doudizu.seckill.redis.ProductKey;
 import com.doudizu.seckill.redis.RedisClusterService;
 import com.doudizu.seckill.redis.RedisService;
-import com.doudizu.seckill.result.Result;
 import com.doudizu.seckill.service.OrderService;
 import com.doudizu.seckill.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,8 +40,6 @@ public class ProductController {
     @GetMapping("/product")
     @ResponseBody
     public ResponseEntity getProduct(@RequestParam("pid") long pid) {
-        //redisClusterService.setproduct("111", "222");
-        //log.info("pid:" + pid);
         String res = redisClusterService.getproduct(String.valueOf(pid));
         if (res == null) {
             return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);

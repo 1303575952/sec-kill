@@ -18,28 +18,27 @@ public class RedisClusterFactory {
     PropertiesConf propertiesConf;
 
     @Bean
-    public JedisCluster JedisClusterFactory()
-    {
+    public JedisCluster JedisClusterFactory() {
         Set<HostAndPort> nodes = new HashSet<>();
 
-        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress0(),propertiesConf.getRedisclusterPort1()));
-        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress1(),propertiesConf.getRedisclusterPort1()));
-        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress2(),propertiesConf.getRedisclusterPort1()));
-        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress3(),propertiesConf.getRedisclusterPort1()));
-        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress4(),propertiesConf.getRedisclusterPort1()));
+        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress0(), propertiesConf.getRedisclusterPort1()));
+        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress1(), propertiesConf.getRedisclusterPort1()));
+        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress2(), propertiesConf.getRedisclusterPort1()));
+        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress3(), propertiesConf.getRedisclusterPort1()));
+        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress4(), propertiesConf.getRedisclusterPort1()));
 
-        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress0(),propertiesConf.getRedisclusterPort2()));
-        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress1(),propertiesConf.getRedisclusterPort2()));
-        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress2(),propertiesConf.getRedisclusterPort2()));
-        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress3(),propertiesConf.getRedisclusterPort2()));
-        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress4(),propertiesConf.getRedisclusterPort2()));
+        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress0(), propertiesConf.getRedisclusterPort2()));
+        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress1(), propertiesConf.getRedisclusterPort2()));
+        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress2(), propertiesConf.getRedisclusterPort2()));
+        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress3(), propertiesConf.getRedisclusterPort2()));
+        nodes.add(new HostAndPort(propertiesConf.getRedisclusterAddress4(), propertiesConf.getRedisclusterPort2()));
 
         GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
         genericObjectPoolConfig.setMaxIdle(1);
         genericObjectPoolConfig.setMaxTotal(16);
         genericObjectPoolConfig.setMaxWaitMillis(1000);
 
-        JedisCluster jedisCluster = new JedisCluster(nodes,genericObjectPoolConfig);
+        JedisCluster jedisCluster = new JedisCluster(nodes, genericObjectPoolConfig);
 
         return jedisCluster;
     }

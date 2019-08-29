@@ -3,10 +3,7 @@ package com.doudizu.seckill.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.doudizu.seckill.conf.PropertiesConf;
-import com.doudizu.seckill.domain.Order;
 import com.doudizu.seckill.domain.OrderInfo;
-import com.doudizu.seckill.domain.Product;
-import com.doudizu.seckill.redis.OrderKey;
 import com.doudizu.seckill.redis.RedisClusterService;
 import com.doudizu.seckill.redis.RedisService;
 import com.doudizu.seckill.service.OrderService;
@@ -21,7 +18,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.math.BigInteger;
 import java.util.*;
 
 @Slf4j

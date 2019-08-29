@@ -4,7 +4,6 @@ import com.doudizu.seckill.domain.Order;
 import com.doudizu.seckill.domain.OrderInfo;
 import org.apache.ibatis.annotations.*;
 
-import java.math.BigInteger;
 import java.util.List;
 
 @Mapper

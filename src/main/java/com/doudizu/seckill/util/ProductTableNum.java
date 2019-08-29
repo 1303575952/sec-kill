@@ -69,7 +69,7 @@ public class ProductTableNum {
                 3163885158L};
         int i = 0;
         for (; i < arr.length; i++) {
-            if (pid> arr[i]) continue;
+            if (pid > arr[i]) continue;
             //return i;
             break;
         }
