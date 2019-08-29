@@ -7,9 +7,7 @@ import com.doudizu.seckill.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.Pipeline;
 
 import java.util.Iterator;
 import java.util.Set;
