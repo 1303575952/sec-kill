@@ -13,6 +13,8 @@ public class RedisService {
 
     @Autowired
     JedisPool jedisPool;
+    @Autowired
+    PropertiesConf propertiesConf;
 
     @Autowired
     PropertiesConf propertiesConf;
@@ -122,6 +124,19 @@ public class RedisService {
             returnToPool(jedis);
         }
     }
+
+
+
+    public void sadd(String key,String field){
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            jedis.sadd(key,field);
+        } finally {
+            returnToPool(jedis);
+        }
+    }
+
 
     public <T> String beanToString(T value) {
         if (value == null) {

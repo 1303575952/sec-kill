@@ -2,6 +2,7 @@ package com.doudizu.seckill.controller;
 
 import com.doudizu.seckill.conf.PropertiesConf;
 import com.doudizu.seckill.domain.Product;
+import com.doudizu.seckill.redis.Data2Redis;
 import com.doudizu.seckill.redis.ProductKey;
 import com.doudizu.seckill.redis.RedisClusterService;
 import com.doudizu.seckill.redis.RedisService;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,27 +43,21 @@ public class ProductController {
     //商品信息接口
     @GetMapping("/product")
     @ResponseBody
-    public ResponseEntity getProduct(@RequestParam("pid") int pid) {
-        redisClusterService.flush();
-        Product product = productService.getProductByPid(pid);
-        return new ResponseEntity<>(product, HttpStatus.OK);
-    }
-
-    @RequestMapping("/product/redis")
-    @ResponseBody
-    public Product redisGet(@RequestParam("pid") int pid) {
-        Product product = redisService.get(ProductKey.getByPid, pid, Product.class);
-        return product;
-    }
-
-    @RequestMapping("/product/redis/set")
-    @ResponseBody
-    public Result<Boolean> redisSet(@RequestParam("pid") int pid) {
-        Product product = new Product();
-        product.setPid(1);
-        product.setDetail("this is detail");
-        redisService.set(ProductKey.getByPid, pid, product);//pid
-        return Result.success(true);
+    public ResponseEntity getProduct(@RequestParam("pid") long pid) {
+        //redisClusterService.setproduct("111", "222");
+        //log.info("pid:" + pid);
+        String res = redisClusterService.getproduct(String.valueOf(pid));
+        if (res == null) {
+            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        } else {
+            Product product = new Product();
+            String[] strArr = res.split("-");
+            product.setPid(pid);
+            product.setCount(Integer.valueOf(strArr[0]));
+            product.setPrice(Integer.valueOf(strArr[1]));
+            product.setDetail(strArr[2]);
+            return new ResponseEntity<>(product, HttpStatus.OK);
+        }
     }
 
     //状态复原接口接口
@@ -75,15 +71,11 @@ public class ProductController {
             returnMap.put("code", 1);
             return new ResponseEntity<>(returnMap, HttpStatus.OK);
         }
-        int p = productService.resetProduct();
-        int o = orderService.clearOrder();
-        log.info("p:" + p + ", o:" + o);
-        if (p == propertiesConf.getProductCategory() && o == 0) {
-            code = 0;
-        } else {
-            code = 1;
-        }
-        returnMap.put("code", code);
+        //log.info("开始reset");
+        redisClusterService.flush();
+        //log.info("集群reset完毕");
+        redisClusterService.flushcheat();
+        returnMap.put("code", 0);
         return new ResponseEntity<>(returnMap, HttpStatus.OK);
     }
 }

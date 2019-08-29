@@ -2,11 +2,16 @@ package com.doudizu.seckill.redis;
 
 import com.alibaba.fastjson.JSON;
 import com.doudizu.seckill.conf.PropertiesConf;
+import com.doudizu.seckill.domain.Product;
+import com.doudizu.seckill.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.Pipeline;
 
+import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
@@ -17,190 +22,384 @@ public class RedisClusterService {
     JedisCluster jedisCluster;
     @Autowired
     PropertiesConf propertiesConf;
+    @Autowired
+    ProductService productService;
 
-    public <T> T get(KeyPrefix prefix, int key, Class<T> clazz) {
+
+    public String get(String key) {
         try {
-            //生成真正的key
-            String realKey = prefix.getPrefix() + key;
-            String str = jedisCluster.get(realKey);
-            T t = stringToBean(str, clazz);
-            return t;
-        } catch (Exception ex)
-        {
-
+            String str = null;
+            str = jedisCluster.get(key);
+            return str;
+        } catch (Exception ex) {
+            //log.error("redis cluster get {key:" + key + "}", ex);
         }
         return null;
     }
 
-    public <T> boolean set(KeyPrefix prefix, int key, T value) {
+    public void sadd(String key, String field) {
+        jedisCluster.sadd(key, field);
+    }
+
+    public boolean setproduct(String pid, String detail) {
         try {
-            String str = beanToString(value);
-            if (str == null || str.length() <= 0) {
+            String res = jedisCluster.set(pid, detail, "nx", "ex", propertiesConf.getRedisclusterProductlife());
+            //log.info("setProduct res:" + pid + " " + res);
+            return true;
+        } catch (Exception ex) {
+            //log.error("redis cluster setproduct {key:" + pid + ",detail:" + detail, ex);
+        }
+        return false;
+    }
+
+    public String fromMySQL(String pid) {
+        try {
+            Product res = productService.getProductByPid(Long.valueOf(pid));
+            if (res == null)
+                return null;
+            String detail = "" + res.getPrice() + "-" + res.getDetail();
+            setproduct(pid, detail);
+            return detail;
+        } catch (Exception ex) {
+            //log.error("redis cluster fromMySQL {pid:" + pid + "}", ex);
+        }
+        return null;
+    }
+
+    /**
+     * 返回 price-detail或者null
+     *
+     * @param pid
+     * @return
+     */
+
+    private String getproductdetail(String pid) {
+        try {
+            String res = jedisCluster.get(pid);
+            if (res == null) {
+                return fromMySQL(pid);
+            }
+            return res;
+        } catch (Exception ex) {
+            //log.error("redis cluster get product detail {key:" + pid + "}", ex);
+        }
+        return null;
+    }
+
+    /**
+     * 返回null或count-price-detail
+     *
+     * @param pid
+     * @return
+     */
+    public String getproduct(String pid) {
+        try {
+            String product = getproductdetail(pid);
+            if (product == null)
+                return null;
+            long count = propertiesConf.getRedisclusterProductnum() - jedisCluster.scard("order:pid:" + pid);
+            return count + "-" + product;
+        } catch (Exception ex) {
+            //log.error("redis cluster get product {key:" + pid + "}", ex);
+        }
+        return null;
+    }
+
+
+    public boolean set(String key, String value) {
+        try {
+            System.out.println(jedisCluster.set(key, value));
+            System.out.println("key:" + key);
+            System.out.println("value:" + value);
+            return true;
+        } catch (Exception ex) {
+            //log.error("redis cluster set {key:" + key + ",value:" + value + "}", ex);
+        }
+        return false;
+    }
+
+    public boolean existsproduct(String pid) {
+        try {
+            if (jedisCluster.exists(pid)) {
+                //log.info("pid存在:" + pid);
+                return true;
+            }
+            String detail = fromMySQL(pid);
+            if (detail == null) {
+                //log.info("MySQL中无数据");
                 return false;
             }
-            //生成真正的key
-            String realKey = prefix.getPrefix() + key;
-            int seconds = prefix.expireSeconds();
-            if (seconds <= 0) {
-                jedisCluster.set(realKey, str);
-            } else {
-                jedisCluster.setex(realKey, seconds, str);
-            }
+            setproduct(pid, detail);
             return true;
-        } catch(Exception ex) {
-
+        } catch (Exception ex) {
+            //log.error("redis cluster exists product{pid:" + pid + "}", ex);
         }
         return false;
     }
 
-    public <T> boolean exists(KeyPrefix prefix, String key) {
+    public Long incr(String key) {
         try {
-            //生成真正的key
-            String realKey = prefix.getPrefix() + key;
-            return jedisCluster.exists(realKey);
-        } catch (Exception x){
-
-        }
-        return false;
-    }
-
-    public <T> Long incr(KeyPrefix prefix, String key) {
-        try {
-            //生成真正的key
-            String realKey = prefix.getPrefix() + key;
-            return jedisCluster.incr(realKey);
-        } catch (Exception ex){
-
+            return jedisCluster.incr(key);
+        } catch (Exception ex) {
+            //log.error("redis cluster incr {key:" + key + "}", ex);
         }
         return Long.MIN_VALUE;
     }
 
-    public <T> Long decr(KeyPrefix prefix, String key) {
+    public Long decr(String key) {
         try {
-            //生成真正的key
-            String realKey = prefix.getPrefix() + key;
-            return jedisCluster.decr(realKey);
-        } catch (Exception ex){
+            return jedisCluster.decr(key);
+        } catch (Exception ex) {
+            //log.error("redis cluster decr {key:" + key + "}", ex);
         }
         return Long.MAX_VALUE;
     }
 
-
-    public boolean createpay(String uid,String pid)
-    {
-        try {
-            String paypid="pay:pid:"+pid;
-            String orderpid = "order:pid:"+pid;
-            String payuid="pay:uid:"+uid;
-            if(!jedisCluster.sismember(orderpid,uid) || jedisCluster.sismember(paypid,uid) ||
-                    jedisCluster.scard(paypid)>=propertiesConf.getRedisclusterProductnum())
-                return false;
-            String lockkey = getlockkey("pay",pid);
-            String lockvalue = getlockvalue(uid);
-            if(!lock(lockkey,lockvalue))
-                return false;
-            if(jedisCluster.scard(paypid)>=propertiesConf.getRedisclusterProductnum())
-                return false;
-            jedisCluster.sadd(paypid,uid);
-            jedisCluster.sadd(payuid,pid);
-            releaselock(lockkey,lockvalue);
-            jedisCluster.sadd("reset",paypid,payuid);
-            return true;
-        } catch (Exception ex){
+    public String getOrderId(String uid, String pid) {
+        String orderuid = "order:uid:" + uid;
+        String res = jedisCluster.hget(orderuid, pid);
+        if (res == null) {
+            return null;
         }
-        return false;
+        String[] strArr = res.split("~");
+        return strArr[2];
     }
-    public boolean createorder(String uid,String pid)
-    {
+
+    public boolean createpay(String uid, String pid, String token) {
         try {
-            String orderpid="order:pid:"+pid;
-            String orderuid="order:uid:"+uid;
-            if(jedisCluster.sismember(orderpid,uid) || jedisCluster.scard(orderpid)>=propertiesConf.getRedisclusterProductnum())
+            String orderpid = "order:pid:" + pid;
+            String orderuid = "order:uid:" + uid;
+            String payuid = "pay:uid:" + uid;
+            if (!existsproduct(pid) || !jedisCluster.sismember(orderpid, uid))
                 return false;
-            String lockkey = getlockkey("order",pid);
+            /*String lockkey = getlockkey("pay",pid);
             String lockvalue = getlockvalue(uid);
             if(!lock(lockkey,lockvalue))
+                return false;*/
+            //可以删除，但是可能订单超过限制
+            if (jedisCluster.hexists(payuid, pid)) {
+                /*releaselock(lockkey,lockvalue);*/
                 return false;
-            if(jedisCluster.scard(orderpid)>=propertiesConf.getRedisclusterProductnum())
-                return false;
-            jedisCluster.sadd(orderpid,uid);
-            jedisCluster.sadd(orderuid,pid);
-            releaselock(lockkey,lockvalue);
-            jedisCluster.sadd("reset",orderpid,orderuid);
-            return true;
-        } catch (Exception ex){
+            }
+            String result = jedisCluster.hget(orderuid, pid);
+            result += "-" + token;
+            jedisCluster.hset(payuid, pid, result);//payuid为order_id-token
 
+            jedisCluster.hdel(orderuid, pid);
+
+            /*releaselock(lockkey,lockvalue);*/
+            jedisCluster.sadd("reset", payuid);
+            return true;
+        } catch (Exception ex) {
+            //log.error("redis cluster create pay {uid:" + uid + ",pid:" + pid);
         }
         return false;
     }
 
-    public void flush()
-    {
-        try{
+    public boolean createorder(String uid, String pid, String order_id) {
+        try {
+            String orderpid = "order:pid:" + pid;
+            String orderuid = "order:uid:" + uid;
+            if (!existsproduct(pid) || jedisCluster.sismember(orderpid, uid) ||
+                    jedisCluster.scard(orderpid) >= propertiesConf.getRedisclusterProductnum()) {
+                return false;
+            }
+            String lockkey = getlockkey("order", pid);
+            String lockvalue = getlockvalue(uid);
+            //进入临界区
+            if (!lock(lockkey, lockvalue)) {
+                //log.info("获取锁失败");
+                return false;
+            }
+            log.info("已获取到锁");
+            //可以删除,但是有可能会超订
+            if (jedisCluster.sismember(orderpid, uid) || jedisCluster.scard(orderpid) >= propertiesConf.getRedisclusterProductnum()) {
+                releaselock(lockkey, lockvalue);
+                //log.info("重复下单");
+                return false;
+            }
+            jedisCluster.sadd(orderpid, uid);
+            //log.info("正常下单" + orderpid);
+            releaselock(lockkey, lockvalue);
+
+            jedisCluster.hset(orderuid, pid, order_id);
+
+            jedisCluster.zadd(orderuid + ":pid", Integer.valueOf(pid), pid);
+
+            jedisCluster.sadd("reset", orderpid, orderuid, orderuid + ":pid");
+            return true;
+        } catch (Exception ex) {
+            log.error("redis cluster create pay {uid:" + uid + ",pid:" + pid + "}", ex);
+        }
+        return false;
+    }
+
+    public void flush() {
+        try {
             Set<String> keys = jedisCluster.smembers("reset");
-            for(String key:keys)
-            {
+            //log.info("获取所有成员");
+            for (String key : keys) {
                 jedisCluster.del(key);
+                log.info("reset:" + key);
             }
             jedisCluster.del("reset");
-        }catch (Exception ex)
-        {
-
+        } catch (Exception ex) {
+            log.error("redis cluster flush", ex);
         }
     }
 
-    private String getlockkey(String prefix,String pid)
-    {
-        return "mutex:"+prefix+":"+pid;
+    /**
+     * 返回用户订的所有订单,内部结构为：
+     * pid-price-detail-status-order_id-token
+     *
+     * @param uid
+     * @return
+     */
+    public String[] getallorder(String uid) {
+        String orderuid = "order:uid:" + uid;
+        String payuid = "pay:uid:" + uid;
+        Set<String> pids = jedisCluster.zrange(orderuid + ":pid", 0, -1);
+        if (pids == null)
+            return null;
+        Iterator<String> it = pids.iterator();
+        String[] result = new String[pids.size()];
+        int i = 0;
+        while (it.hasNext()) {
+            String pid = it.next(); //pid
+            String detail = getproductdetail(pid);//price-detail
+            String res = pid + "-" + detail;    //pid-price-detail
+            if ((detail = jedisCluster.hget(payuid, pid)) != null)//成功支付
+            {
+                res += "-1-" + detail;//pid-price-detail-status-order_id-token
+            } else {
+                detail = jedisCluster.hget(orderuid, pid);//order_id
+                res += "-0-" + detail + "-";//pid-price-detail-status-order_id-token
+            }
+            result[i] = res;
+            ++i;
+        }
+        return result;
     }
 
-    private String getlockvalue(String uid)
-    {
-        int randno = UUID.randomUUID().toString().hashCode();
-        if(randno<0)
-            randno=-randno;
-        return uid+String.format("%16d",randno);
+    /**
+     * 获取分布式锁的key
+     *
+     * @param prefix
+     * @param pid
+     * @return
+     */
+    private String getlockkey(String prefix, String pid) {
+        return "mutex:" + prefix + ":" + pid;
     }
-    private boolean lock(String key,String value)
-    {
+
+    /**
+     * 获取分布式锁的值
+     *
+     * @param uid
+     * @return
+     */
+    private String getlockvalue(String uid) {
+        int randno = UUID.randomUUID().toString().hashCode();
+        if (randno < 0)
+            randno = -randno;
+        return uid + String.format("%16d", randno);
+    }
+
+    /**
+     * 上锁，会尝试几次
+     *
+     * @param key
+     * @param value
+     * @return
+     */
+    private boolean lock(String key, String value) throws InterruptedException {
         try {
-            for(int j=propertiesConf.getRedisclusterMutexnum();j>0;--j)
-            {
-                if(trylock(key,value,propertiesConf.getRedisclusterMutextime()))
-                {
+            for (int j = propertiesConf.getRedisclusterMutexnum(); j > 0; --j) {
+                if (trylock(key, value, propertiesConf.getRedisclusterMutextime())) {
                     return true;
                 }
+                int mili = (int) (Math.random() * 16);
+                Thread.sleep(mili);
             }
-        } catch (Exception ex){
+        } catch (Exception ex) {
+            log.error("redis cluster get lock {key:" + key + ",value:" + value + "}", ex);
         }
         return false;
     }
 
-    private boolean trylock(String key,String value,int expire)
-    {
+    private boolean trylock(String key, String value, int expire) {
         try {
-            String result = jedisCluster.set(key,value,"nx","ex",expire);
-            return (result!=null) && ("OK".equals(result) || "+OK".equals(result));
-        } catch (Exception ex){
+            String result = jedisCluster.set(key, value, "nx", "ex", expire);
+            return (result != null) && ("OK".equals(result) || "+OK".equals(result));
+        } catch (Exception ex) {
+            log.error("redis cluster try lock {key:" + key + ",value:" + value + "}", ex);
         }
         return false;
     }
 
-    private boolean releaselock(String key,String value)
-    {
+    private boolean releaselock(String key, String value) {
         try {
-            if(value.equals(jedisCluster.get(key)))
-            {
+            if (value.equals(jedisCluster.get(key))) {
                 jedisCluster.del(key);
                 return true;
-            }
-            else
+            } else
                 return false;
-        } catch (Exception ex){
-
+        } catch (Exception ex) {
+            log.error("redis cluster release lock {key:" + key + ",value:" + value + "}", ex);
         }
         return false;
     }
+
+    /**
+     * 验证用户是否订了很多订单，但是未支付，如果是，认为属于作弊用户
+     *
+     * @param uid
+     * @return
+     */
+    public boolean verify(String uid) {
+        if (jedisCluster.hlen("order:uid:" + uid) > propertiesConf.getRedisclusterMaxorder())
+            return false;
+        return true;
+    }
+
+    /**
+     * @param prefix uid 或者 IP
+     * @param value  对应的ID或者IP地址
+     * @return
+     */
+    public boolean verifypre(String prefix, String value) {
+
+        String cheatname = "cheat:" + prefix;
+        if (jedisCluster.sismember(cheatname, value))
+            return false;
+        Long current = System.currentTimeMillis() % propertiesConf.getRedisverifyTimes();
+
+        String timename = "Time:" + prefix + ":" + current;
+        String countname = "count:" + prefix;
+
+        if (jedisCluster.sismember(timename, value)) {
+            Long count = jedisCluster.hincrBy(countname, value, 1);
+            if (count > propertiesConf.getRedisverifyNum()) {
+                jedisCluster.sadd(cheatname, value);
+                return false;
+            }
+        } else {
+            jedisCluster.sadd(timename, value);
+            jedisCluster.expire(timename, propertiesConf.getRedisverifyTimes() * 2);
+            jedisCluster.hset(countname, value, String.valueOf(0));
+        }
+        return true;
+
+    }
+
+    public void flushcheat() {
+        jedisCluster.del("cheat:IP", "cheat:uid");
+    }
+
+    public boolean verifyall(String uid, String session, String IP) {
+        return uid.equals(jedisCluster.get(session)) && verifypre("uid", uid) && verifypre("IP", IP);
+    }
+
     public <T> String beanToString(T value) {
         if (value == null) {
             return null;
