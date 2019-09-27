@@ -22,13 +22,13 @@ public class OrderService {
     }
 
     //某用户某商品的订单
-    public List<Order> getOrderByUidAndPid(int uid, int pid) {
+    public List<Order> getOrderByUidAndPid(int uid, long pid) {
         return orderDao.getOrderByUidAndPid(uid, pid);
     }
 
     //先减库存再下订单
     @Transactional
-    public String createOrder(int uid, int pid) {
+    public String createOrder(int uid, long pid) {
         productService.reduceStock(pid);
         String orderId = "" + System.currentTimeMillis() + pid + uid;
         orderDao.createOrder(orderId, uid, pid);

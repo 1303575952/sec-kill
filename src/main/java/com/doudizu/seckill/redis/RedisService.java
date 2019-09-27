@@ -1,16 +1,20 @@
 package com.doudizu.seckill.redis;
 
 import com.alibaba.fastjson.JSON;
+import com.doudizu.seckill.conf.PropertiesConf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.Pipeline;
 
 @Service
 public class RedisService {
 
     @Autowired
     JedisPool jedisPool;
+    @Autowired
+    PropertiesConf propertiesConf;
 
     /**
      * 通过key拿到value
@@ -119,7 +123,19 @@ public class RedisService {
         }
     }
 
-    private <T> String beanToString(T value) {
+
+    public void sadd(String key, String field) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            jedis.sadd(key, field);
+        } finally {
+            returnToPool(jedis);
+        }
+    }
+
+
+    public <T> String beanToString(T value) {
         if (value == null) {
             return null;
         }
@@ -136,7 +152,7 @@ public class RedisService {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T stringToBean(String str, Class<T> clazz) {
+    public <T> T stringToBean(String str, Class<T> clazz) {
         if (str == null || str.length() <= 0 || clazz == null) {
             return null;
         }
@@ -157,4 +173,50 @@ public class RedisService {
         }
     }
 
+    public void flush() {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            jedis.del("cheat:IP", "cheat:uid");
+        } finally {
+            returnToPool(jedis);
+        }
+    }
+
+    /**
+     * @param prefix uid 或者 IP
+     * @param value  对应的ID或者IP地址
+     * @return
+     */
+    public boolean verify(String prefix, String value) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            String cheatname = "cheat:" + prefix;
+            if (jedis.sismember(cheatname, value))
+                return false;
+            Long current = System.currentTimeMillis() % propertiesConf.getRedisverifyTimes();
+
+            String timename = "Time:" + prefix + ":" + current;
+            String countname = "count:" + prefix;
+
+            if (jedis.sismember(timename, value)) {
+                Long count = jedis.hincrBy(countname, value, 1);
+                if (count > propertiesConf.getRedisverifyNum()) {
+                    jedis.sadd(cheatname, value);
+                    return false;
+                }
+            } else {
+                Pipeline pl = null;
+                pl = jedis.pipelined();
+                pl.sadd(timename, value);
+                pl.expire(timename, propertiesConf.getRedisverifyTimes() * 2);
+                pl.hset(countname, value, String.valueOf(0));
+                pl.sync();
+            }
+            return true;
+        } finally {
+            returnToPool(jedis);
+        }
+    }
 }
